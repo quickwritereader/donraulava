@@ -1,0 +1,40 @@
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Executable files
+*.exe
+*.out
+*.app
+
+# Object files
+*.o
+*.obj
+
+# Libraries
+*.lib
+*.a
+*.so
+*.dylib
+*.dll
+
+# User-specific files
+*.user
+*.userprefs
+*.local
+
+# Build directories
+/build/
+/bin/
+/lib/
+/dist/
+/Debug/
+/Release/
+/out/
+
+# IDE specific files
+.idea/
+#.vscode/
+*.code-workspace
