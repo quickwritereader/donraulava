@@ -1,5 +1,5 @@
 #include "utils.h"
-
+#include <versionhelpers.h>
 using namespace Gdiplus;
 
 auto getUserProfile() -> std::string
@@ -163,7 +163,7 @@ auto SimulateKeyPress(WORD virtualKey) -> void
     SendInput(2, inputs, sizeof(INPUT));
 }
 
-auto currentMilliseconds() -> std::uint64_t
+auto CurrentMilliseconds() -> std::uint64_t
 {
     return GetTickCount64();
 }
@@ -185,35 +185,20 @@ auto GetLastErrorAsString() -> std::string
     return message;
 }
 
-auto GetDesktopScreenRect() ->RECT {
-
+auto GetDesktopScreenRect() -> std::tuple<RECT, float>
+{
 
     // Get the screen dimensions
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-    // Retrieve the DPI for the primary monitor
-    HDC screenDC = GetDC(0);
-    int dpiX = GetDeviceCaps(screenDC, LOGPIXELSX);
-    int dpiY = GetDeviceCaps(screenDC, LOGPIXELSY);
-    ReleaseDC(0, screenDC);
-
-    // Calculate the adjusted screen dimensions
+    int dpiX = 96;
+    // Get the DPI of the primary monitor
+    HWND hwnd = GetDesktopWindow();
+    UINT dpi = GetDpiForWindow(hwnd);
+    dpiX = dpi;
     // Calculate the scale factors
-    // Calculate the scale factors
-    float scaleFactorX = dpiX / 96.0f;
-    float scaleFactorY = dpiY / 96.0f;
+    float scaleFactorX = static_cast<float>(dpiX) / 96.0f; 
 
-    // Adjust the screen dimensions according to the scale factors
-    int adjustedWidth = static_cast<int>(screenWidth / scaleFactorX);
-    int adjustedHeight = static_cast<int>(screenHeight / scaleFactorY);
-
-    // Define the RECT for the desktop screen
-    RECT desktopRect;
-    desktopRect.left = 0;
-    desktopRect.top = 0;
-    desktopRect.right = adjustedWidth;
-    desktopRect.bottom = adjustedHeight;
-
-    return desktopRect;
+    return {RECT{0, 0, screenWidth, screenHeight}, scaleFactorX};
 }

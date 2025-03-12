@@ -12,7 +12,6 @@ endif()
 
 
 project ("donRaulAva")
-
 # Set policy CMP0115 to NEW
 if (POLICY CMP0115)
   cmake_policy(SET CMP0115 NEW)
@@ -25,20 +24,47 @@ if(NOT CMAKE_SIZEOF_VOID_P)
 endif()
 
 # Find and include OpenCV
+
 FIND_PACKAGE(OpenCV REQUIRED)
 
 # Add executable and source files
-add_executable(donRaulAva WIN32
+add_executable(donRaulAva WIN32 
   "donRaulAva.cpp"
   "utils.cpp"
+  "WinApiScreenCapture.cpp"
+  "DesktopDuplicateCapture.cpp"
   "ConfigDialog.cpp"
   "resource.rc"
 )
 target_include_directories(donRaulAva PRIVATE ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(donRaulAva ${OpenCV_LIBS})
+target_link_libraries(donRaulAva 
+            ${OpenCV_LIBS}
+            d3d11
+            dxgi
+)
 # Set C++ standard if CMake version is greater than 3.12
 if(CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET donRaulAva PROPERTY CXX_STANDARD 20)
+endif() 
+# Embed standard library for both GCC and MSVC
+if(MSVC)
+    foreach(flag_var
+        CMAKE_C_FLAGS
+        CMAKE_C_FLAGS_DEBUG
+        CMAKE_C_FLAGS_RELEASE
+        CMAKE_C_FLAGS_MINSIZEREL
+        CMAKE_C_FLAGS_RELWITHDEBINFO
+        CMAKE_CXX_FLAGS
+        CMAKE_CXX_FLAGS_DEBUG
+        CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_CXX_FLAGS_MINSIZEREL
+        CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+        if(${flag_var} MATCHES "/MD")
+            string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+        endif()
+    endforeach()
+else()
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 endif()
 
 # TODO: Add tests and install targets if needed.

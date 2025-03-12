@@ -3,6 +3,8 @@
 #include <gdiplus.h>
 #include <vector>
 #include <string>
+#include <tuple>
+#include <sstream>
 
 /**
  * @brief Draws a window at the specified position with the given dimensions and bitmap.
@@ -75,7 +77,7 @@ auto SimulateKeyPress(WORD virtualKey) -> void;
  *
  * @return std::uint64_t Current time in milliseconds.
  */
-auto currentMilliseconds() -> std::uint64_t;
+auto CurrentMilliseconds() -> std::uint64_t;
 
 /**
  * @brief Retrieves the last error message as a string.
@@ -84,5 +86,33 @@ auto GetLastErrorAsString()->std::string;
 
 /**
  * @brief Get the desktop screen rectangle
+ * Returns a tuple containing the screen rectangle  and the DPI scale factor
  */
-auto GetDesktopScreenRect()->RECT;
+auto GetDesktopScreenRect()-> std::tuple<RECT, float>;
+
+
+// Function template to log error messages with space-separated variables using OutputDebugString
+template <typename... Args>
+void log(const std::string& messageType, Args&&... args) {
+    // Create a string stream to format the error message
+    std::ostringstream oss;
+    oss <<"DonRaulito "<< messageType << ": ";
+
+    // Use a fold expression to append the arguments to the string stream
+    ((oss << args << " "), ...);
+
+    // Convert the formatted message to a wide string
+    std::string msg = oss.str(); 
+    // Output the message using OutputDebugString
+    OutputDebugStringA(msg.c_str());
+}
+
+template <typename... Args>
+void logError(Args&&... args) {
+    log("Error", std::forward<Args>(args)...); 
+}
+
+template <typename... Args>
+void logInfo(Args&&... args) {
+    log("Info", std::forward<Args>(args)...); 
+}

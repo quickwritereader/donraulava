@@ -23,7 +23,7 @@ auto ConfigDialog::readConfig() -> void
 			for (auto range : split_view)
 			{
 				std::string str(range.begin(), range.end());
-				// MessageBox(NULL, (str).c_str(), "Info", MB_OK | MB_ICONINFORMATION);
+				// logError( (str).c_str(), "Info", MB_OK | MB_ICONINFORMATION);
 				params[i] = safeStoiDefault(str);
 				i++;
 				// break if we reach the end of the array
@@ -51,7 +51,7 @@ auto ConfigDialog::save() -> void
 	}
 	catch (...)
 	{
-		MessageBox(NULL, "Error saving config file", "Error", MB_OK | MB_ICONERROR);
+		logError( "Error saving config file");
 	}
 }
 

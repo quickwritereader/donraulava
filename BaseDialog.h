@@ -121,7 +121,7 @@ bool BaseDialog<Derived>::SetText(int controlID, const std::string &text)
 	HWND hControl = GetDlgItem(self, controlID);
 	if (!hControl)
 	{
-		MessageBox(parent, GetLastErrorAsString().c_str(), "error", MB_OK);
+		logError( GetLastErrorAsString());
 		return false;
 	}
 	return SetDlgItemTextA(self, controlID, text.c_str()) != 0;
@@ -133,7 +133,7 @@ std::string BaseDialog<Derived>::GetText(int controlID) const
 	HWND hControl = GetDlgItem(self, controlID);
 	if (!hControl)
 	{
-		MessageBox(parent, GetLastErrorAsString().c_str(), "error", MB_OK);
+		logError( GetLastErrorAsString());
 		return "";
 	}
 

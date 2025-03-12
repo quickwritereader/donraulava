@@ -2,15 +2,16 @@
 //
 
 #include "donRaulAva.h"
-
+#include "WinApiScreenCapture.h"
+#include "DesktopDuplicateCapture.h"
 
 // Global Variables:
 
-
 Gdiplus::Bitmap *bitmap;
 Gdiplus::Bitmap *glowBitmap;
-RECT screenRect;
-
+RECT ScreenRect;
+float ScaleFactor;
+auto checkCloseBtnAnimation(HWND hWnd, Gdiplus::Bitmap *bitmap, const POINT &currentPos) -> void;
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
     using namespace Gdiplus;
@@ -54,7 +55,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
     if (bitmap->GetLastStatus() != Ok)
     {
-        MessageBox(nullptr, "Bitmap load failure", "DonRaulito", MB_OK | MB_ICONERROR);
+        logError("Bitmap load failure", "DonRaulito");
         return 0;
     }
 
@@ -75,7 +76,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
     if (!RegisterClassEx(&wcex))
     {
-        MessageBox(nullptr, "Call to RegisterClassEx failed!", "DonRaulito", MB_OK | MB_ICONERROR);
+        logError("Call to RegisterClassEx failed!", "DonRaulito");
         return 1;
     }
 
@@ -86,15 +87,15 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
     if (!hWnd)
     {
-        MessageBox(nullptr, "Call to CreateWindow failed!", "DonRaulito", MB_OK | MB_ICONERROR);
+        logError("Call to CreateWindow failed!", "DonRaulito");
         return 1;
     }
 
-    screenRect=GetDesktopScreenRect();
-
-    DrawWindow(hWnd, bitmap, screenRect.right-width-80, screenRect.bottom-height-120, width, height);
+    std::tie(ScreenRect, ScaleFactor) = GetDesktopScreenRect();
+    logInfo("Screen Information", "Scale Factor: ", ScaleFactor, "Screen Width: ", ScreenRect.right,
+             "Screen Height: ", ScreenRect.bottom);
+    DrawWindow(hWnd, bitmap, ScreenRect.right - width - 80, ScreenRect.bottom - height - 120, width, height);
     ShowWindow(hWnd, nCmdShow);
-
     // Show the window
 
     // Main message loop
@@ -113,8 +114,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     return (int)msg.wParam;
 }
 
-
-
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //  PURPOSE:  Processes messages for the main window.
 LRESULT CALLBACK
@@ -126,7 +125,7 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     static bool dragging = false;
     static bool position_changed = false;
     static POINT dragStartPoint;
-    static DWORD startTick = 0;
+    static uint64 startTick = 0;
     static Gdiplus::Bitmap *currentBitmap = bitmap;
     switch (message)
     {
@@ -183,10 +182,6 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             auto width = windowRect.right - windowRect.left;
             auto height = windowRect.bottom - windowRect.top;
 
-            // // Create a message with the position
-            // std::stringstream ss;
-            // ss << "Double-click position: (" << xPos << ", " << yPos << ")";
-            // std::string message = ss.str();
             if (withinClosebtn(hWnd, {xPos, yPos}, width, height))
             {
                 // Close the window
@@ -195,12 +190,26 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else
             {
-                if (GetTickCount() - startTick < 1000)
+                if (CurrentMilliseconds() - startTick < 1000)
                 {
                     currentBitmap = currentBitmap == bitmap ? glowBitmap : bitmap;
                     DrawWindow(hWnd, currentBitmap, windowRect.left, windowRect.top, width, height);
+                    // capture screen
+                    WinApiScreenCapture screenCapture;
+                    DesktopDuplicationCapture screenCaptureDDP;
+                    auto h = CurrentMilliseconds();
+                    cv::Mat screen = screenCapture.grabScreen(ScreenRect);
+                    h = CurrentMilliseconds() - h;
+                    logInfo(h, "Capture Time");
+                    cv::imwrite("screen.jpg", screen);
+                    h = CurrentMilliseconds();
+                    cv::Mat screendd = screenCaptureDDP.grabScreen(ScreenRect);
+                    h = CurrentMilliseconds() - h;
+
+                    logInfo(h, "Capture Time");
+                    cv::imwrite("screen_dd.jpg", screendd);
                 }
-                startTick = GetTickCount();
+                startTick = CurrentMilliseconds();
             }
         }
         position_changed = false;
@@ -210,8 +219,8 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (!config)
         {
             config = new ConfigDialog(glInstance, hWnd);
-            //MessageBox(hWnd, "Button bbdddb clicked!", "Notification", MB_OK);
-            //OutputDebugString("ok");
+            // MessageBox(hWnd, "Button bbdddb clicked!", "Notification", MB_OK);
+            // OutputDebugString("ok");
         }
         config->open();
         break;
@@ -224,7 +233,6 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     return 0;
 }
-
 
 auto checkCloseBtnAnimation(HWND hWnd, Gdiplus::Bitmap *bitmap, const POINT &currentPos) -> void
 {
