@@ -81,3 +81,8 @@ auto currentMilliseconds() -> std::uint64_t;
  * @brief Retrieves the last error message as a string.
  */
 auto GetLastErrorAsString()->std::string;
+
+/**
+ * @brief Get the desktop screen rectangle
+ */
+auto GetDesktopScreenRect()->RECT;

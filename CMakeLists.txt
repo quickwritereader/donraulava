@@ -18,31 +18,20 @@ if (POLICY CMP0115)
   cmake_policy(SET CMP0115 NEW)
 endif()
 
-
-include(FetchContent)
-# Add openCV package
-# Declare and configure OpenCV
-FetchContent_Declare(
-  opencv
-  GIT_REPOSITORY https://github.com/opencv/opencv.git
-  GIT_TAG        4.11.0  
-)
-# Set the option to build OpenCV as a static library
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build OpenCV as static libraries")
-FetchContent_MakeAvailable(opencv)
+set(OPENCV_FOLDER "$ENV{USERPROFILE}\\Downloads\\opencv\\build")
+set(CMAKE_PREFIX_PATH "${OPENCV_FOLDER}")
+if(NOT CMAKE_SIZEOF_VOID_P)
+    set(CMAKE_SIZEOF_VOID_P 8)  # Replace 8 with 4 for 32-bit systems
+endif()
 
 # Find and include OpenCV
-find_package(OpenCV REQUIRED)
+FIND_PACKAGE(OpenCV REQUIRED)
 
 # Add executable and source files
 add_executable(donRaulAva WIN32
   "donRaulAva.cpp"
   "utils.cpp"
-  "donRaulAva.h"
-  "detect_small.h"
-  "resource.h"
-  "ConfigDialog.h"
-  "BaseDialog.h"
+  "ConfigDialog.cpp"
   "resource.rc"
 )
 target_include_directories(donRaulAva PRIVATE ${OpenCV_INCLUDE_DIRS})

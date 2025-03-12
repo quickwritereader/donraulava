@@ -184,3 +184,36 @@ auto GetLastErrorAsString() -> std::string
     LocalFree(messageBuffer);
     return message;
 }
+
+auto GetDesktopScreenRect() ->RECT {
+
+
+    // Get the screen dimensions
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+    // Retrieve the DPI for the primary monitor
+    HDC screenDC = GetDC(0);
+    int dpiX = GetDeviceCaps(screenDC, LOGPIXELSX);
+    int dpiY = GetDeviceCaps(screenDC, LOGPIXELSY);
+    ReleaseDC(0, screenDC);
+
+    // Calculate the adjusted screen dimensions
+    // Calculate the scale factors
+    // Calculate the scale factors
+    float scaleFactorX = dpiX / 96.0f;
+    float scaleFactorY = dpiY / 96.0f;
+
+    // Adjust the screen dimensions according to the scale factors
+    int adjustedWidth = static_cast<int>(screenWidth / scaleFactorX);
+    int adjustedHeight = static_cast<int>(screenHeight / scaleFactorY);
+
+    // Define the RECT for the desktop screen
+    RECT desktopRect;
+    desktopRect.left = 0;
+    desktopRect.top = 0;
+    desktopRect.right = adjustedWidth;
+    desktopRect.bottom = adjustedHeight;
+
+    return desktopRect;
+}

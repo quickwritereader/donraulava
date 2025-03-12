@@ -4,15 +4,16 @@
 #include "donRaulAva.h"
 
 
-using namespace Gdiplus;
+// Global Variables:
 
 
 Gdiplus::Bitmap *bitmap;
 Gdiplus::Bitmap *glowBitmap;
-
+RECT screenRect;
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
+    using namespace Gdiplus;
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
     // Define a unique name for the mutex
@@ -79,7 +80,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     }
 
     // Create the window
-    HWND hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_TOPMOST, wcex.lpszClassName, TEXT("Don Raulito"),
+    HWND hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE, wcex.lpszClassName, TEXT("Don Raulito"),
                                WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT,
                                width, height, nullptr, nullptr, hInstance, nullptr);
 
@@ -89,7 +90,9 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
         return 1;
     }
 
-    DrawWindow(hWnd, 100, 100, width, height, bitmap);
+    screenRect=GetDesktopScreenRect();
+
+    DrawWindow(hWnd, bitmap, screenRect.right-width-80, screenRect.bottom-height-120, width, height);
     ShowWindow(hWnd, nCmdShow);
 
     // Show the window
@@ -195,7 +198,7 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (GetTickCount() - startTick < 1000)
                 {
                     currentBitmap = currentBitmap == bitmap ? glowBitmap : bitmap;
-                    DrawWindow(hWnd, windowRect.left, windowRect.top, width, height, currentBitmap);
+                    DrawWindow(hWnd, currentBitmap, windowRect.left, windowRect.top, width, height);
                 }
                 startTick = GetTickCount();
             }
@@ -214,6 +217,7 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
+        delete config;
         break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
@@ -238,13 +242,13 @@ auto checkCloseBtnAnimation(HWND hWnd, Gdiplus::Bitmap *bitmap, const POINT &cur
         SetCapture(hWnd);
         closebtnUpdated = true;
         DrawCloseBtnOnBitmap(bitmap, width, height, true);
-        DrawWindow(hWnd, windowRect.left, windowRect.top, width, height, bitmap);
+        DrawWindow(hWnd, bitmap, windowRect.left, windowRect.top, width, height);
     }
     else if (closebtnUpdated && !within)
     {
         ReleaseCapture();
         closebtnUpdated = false;
         DrawCloseBtnOnBitmap(bitmap, width, height, false);
-        DrawWindow(hWnd, windowRect.left, windowRect.top, width, height, bitmap);
+        DrawWindow(hWnd, bitmap, windowRect.left, windowRect.top, width, height);
     }
 }

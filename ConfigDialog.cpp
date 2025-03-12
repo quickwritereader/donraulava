@@ -5,21 +5,7 @@
 
 using namespace std::literals;
 
-ConfigDialog::ConfigDialog(HINSTANCE inst, HWND parent) : ConfigDialog(inst, parent, IDD_DIALOG1)
-{
-    // Get user config file
-    configFile = getUserProfile() + "\\donraul.config";
-    // Check if file exists
-    if (std::filesystem::exists(configFile))
-    {
-        readConfig();
-    }
-    else
-    {
-        save();
-    }
-}
-
+//PRIVATE declarations
 auto ConfigDialog::readConfig() -> void
 {
 	// read
@@ -109,6 +95,7 @@ auto ConfigDialog::handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> 
 	}
 }
 
+//PUBLIC declarations
 ConfigDialog::ConfigDialog(HINSTANCE inst, HWND parent) : ConfigDialog(inst, parent, IDD_DIALOG1)
 {
 	// Get user config file
