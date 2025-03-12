@@ -48,8 +48,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     // draw original over again
     glowGraphics.DrawImage(bitmap, 0, 0, width, height);
     // draw close button on both bitmaps
-    DrawCloseBtn(bitmap, width, height, false);
-    DrawCloseBtn(glowBitmap, width, height, false);
+    DrawCloseBtnOnBitmap(bitmap, width, height, false);
+    DrawCloseBtnOnBitmap(glowBitmap, width, height, false);
 
     if (bitmap->GetLastStatus() != Ok)
     {
@@ -237,14 +237,14 @@ auto checkCloseBtnAnimation(HWND hWnd, Gdiplus::Bitmap *bitmap, const POINT &cur
         // another option would be to use TrackMouseEvent
         SetCapture(hWnd);
         closebtnUpdated = true;
-        DrawCloseBtn(bitmap, width, height, true);
+        DrawCloseBtnOnBitmap(bitmap, width, height, true);
         DrawWindow(hWnd, windowRect.left, windowRect.top, width, height, bitmap);
     }
     else if (closebtnUpdated && !within)
     {
         ReleaseCapture();
         closebtnUpdated = false;
-        DrawCloseBtn(bitmap, width, height, false);
+        DrawCloseBtnOnBitmap(bitmap, width, height, false);
         DrawWindow(hWnd, windowRect.left, windowRect.top, width, height, bitmap);
     }
 }

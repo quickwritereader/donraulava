@@ -1,11 +1,7 @@
 #pragma once
 #include "BaseDialog.h"
-#include "utils.h"
-#include <filesystem>
 #include <array>
-#include <fstream>
-#include <ranges>
-using namespace std::literals;
+
 
 // ConfigDialog class
 // This class is used to create a dialog box to configure the program
@@ -15,152 +11,89 @@ using namespace std::literals;
 // This is not thread safe. So do not make ConfigDialog a global variable
 class ConfigDialog : public BaseDialog<ConfigDialog>
 {
-
 private:
-	using BaseDialog::BaseDialog; // Inherit constructors from BaseDialog
-	std::array<int,6> params = {430, 100, 430, 200, 25, 1080};
+	using BaseDialog::BaseDialog;
+	std::array<int, 6> params = {430, 100, 430, 200, 25, 1080};
 	std::string configFile;
 
-	auto readConfig() -> void
-	{
-		// read
-		std::ifstream inFile(configFile);
-		if (inFile.is_open())
-		{
-			std::string res;
-			if (std::getline(inFile, res))
-			{
-				auto split_view = res | std::ranges::views::split(':');
-				//split create a nested range
-				//and explicitely convert it to a string
-				//this is better when there can be corrupted data
-				int i=0;
-				for (auto range : split_view)
-				{
-					std::string str(range.begin(), range.end());
-					//MessageBox(NULL, (str).c_str(), "Info", MB_OK | MB_ICONINFORMATION);
-					params[i]=safeStoiDefault(str);
-					i++;
-					//break if we reach the end of the array
-					if(i>=params.size()) break;
-				}
-				
-			}
-			inFile.close();
-		}
-	}
-	auto
-	save() -> void
-	{
-		try
-		{
+	/**
+	 * @brief Reads the configuration from the configuration file.
+	 */
+	auto readConfig() -> void;
 
-			// Create and write to file
-			std::ofstream outFile(configFile);
-			if (outFile.is_open())
-			{
-				for (auto param : params)
-				{
-					outFile << std::to_string(param) << ":";
-				}
-				outFile.close();
-			}
-		}
-		catch (...)
-		{
-			MessageBox(NULL, "Error saving config file", "Error", MB_OK | MB_ICONERROR);
-		}
-	}
+	/**
+	 * @brief Saves the current configuration to the configuration file.
+	 */
+	auto save() -> void;
 
-	auto fillParamFromEdit() -> void
-	{
-		int controlId[6] = {IDC_EDIT1, IDC_EDIT2, IDC_EDIT3, IDC_EDIT4, IDC_EDIT5, IDC_EDIT6};
-        auto view = controlId | std::views::transform([this](auto Id)
-                                                      { return safeStoiDefault(GetText(Id)); });
-        std::ranges::copy(view, params.begin());
-    }
+	/**
+	 * @brief Fills the parameters from the edit controls in the dialog.
+	 */
+	auto fillParamFromEdit() -> void;
 
+	/**
+	 * @brief Initializes the dialog box.
+	 */
+	virtual auto onInit() -> void;
 
-
-    virtual auto onInit()->void{
-		int controlId[6] = {IDC_EDIT1, IDC_EDIT2, IDC_EDIT3, IDC_EDIT4, IDC_EDIT5, IDC_EDIT6}; 
-		for (int i=0;i<params.size();i++){
-			SetText(controlId[i], std::to_string(params[i]));
-		}
-	}
-
-	virtual auto
-	handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> LRESULT
-	{
-
-		switch (LOWORD(wParam))
-		{ // LOWORD(wParam) is the control ID
-		case IDOK:
-			if (LOWORD(wParam) == IDOK)
-			{
-				fillParamFromEdit();
-				save();
-			}
-		//fall through to IDCANCEL
-		case IDCANCEL:
-			endDialog(wParam);
-			return TRUE;
-		case IDC_RESET:
-			params = {430, 100, 430, 200, 25, 1080};
-			onInit();
-			return TRUE;
-		default:
-			return FALSE;
-
-		}
-	}
+	/**
+	 * @brief Handles command messages sent to the dialog box.
+	 *
+	 * @param message The message identifier.
+	 * @param wParam Additional message information.
+	 * @param lParam Additional message information.
+	 * @return The result of the message processing.
+	 */
+	virtual auto handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> LRESULT;
 
 public:
+	/**
+	 * @brief Constructs a ConfigDialog object.
+	 *
+	 * @param inst The instance handle.
+	 * @param parent The handle to the parent window.
+	 */
+	ConfigDialog(HINSTANCE inst, HWND parent);
 
+	/**
+	 * @brief Gets the left position of the capture area.
+	 *
+	 * @return The left position.
+	 */
+	auto Left() const -> int;
 
-	ConfigDialog(HINSTANCE inst, HWND parent) : ConfigDialog(inst, parent, IDD_DIALOG1)
-	{
-		// Get user config file
-		configFile = getUserProfile() + "\\donraul.config";
-		// Check if file exists
-		if (std::filesystem::exists(configFile))
-		{
-			readConfig();
-		}
-		else
-		{
-			save();
-		}
-	}
+	/**
+	 * @brief Gets the top position of the capture area.
+	 *
+	 * @return The top position.
+	 */
+	auto Top() const -> int;
 
-	//Getters
-	//This should be used only in the main thread
-    //WARNING: Do not use this outside of UI Thread
+	/**
+	 * @brief Gets the right position of the capture area.
+	 *
+	 * @return The right position.
+	 */
+	auto Right() const -> int;
 
-	auto Left() const -> int 
-	{
-		return params[0];
-	}
-	auto Top() const -> int 
-	{
-		return params[1];
-	}
-	auto Right() const -> int 
-	{
-		return params[2];
-	}
-	auto Bottom() const -> int 
-	{
-		return params[3];
-	}
+	/**
+	 * @brief Gets the bottom position of the capture area.
+	 *
+	 * @return The bottom position.
+	 */
+	auto Bottom() const -> int;
 
-	auto Speed() const -> int 
-	{
-		return params[4];
-	}
+	/**
+	 * @brief Gets the speed of the program.
+	 *
+	 * @return The speed.
+	 */
+	auto Speed() const -> int;
 
-	auto ComboThreshold() const -> int 
-	{
-		return params[5];
-	}
+	/**
+	 * @brief Gets the combo threshold.
+	 *
+	 * @return The combo threshold.
+	 */
+	auto ComboThreshold() const -> int;
 };

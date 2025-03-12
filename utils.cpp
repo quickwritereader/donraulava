@@ -10,19 +10,19 @@ auto getUserProfile() -> std::string
     return std::string(userProfile);
 }
 
-auto  safeStoiDefault(const std::string &text, int defaultVal) -> int
+auto safeStoiDefault(const std::string &text, int defaultVal) -> int
 {
-	try
-	{
-		return std::stoi(text);
-	}
-	catch (...)
-	{
-		return defaultVal;
-	}
+    try
+    {
+        return std::stoi(text);
+    }
+    catch (...)
+    {
+        return defaultVal;
+    }
 }
 
-auto DrawCloseBtn(Gdiplus::Bitmap *bitmap, LONG width, LONG height, bool mouseOver = false) -> void
+auto DrawCloseBtnOnBitmap(Gdiplus::Bitmap *bitmap, LONG width, LONG height, bool mouseOver = false) -> void
 {
     // Draw our close rectangle on bitmap
     Graphics bmpGraphics(bitmap);
@@ -33,7 +33,7 @@ auto DrawCloseBtn(Gdiplus::Bitmap *bitmap, LONG width, LONG height, bool mouseOv
     bmpGraphics.DrawLine(&p, width - width / 10, height / 10, width, 0);
 }
 
-auto DrawWindow(HWND hWnd, LONG x, LONG y, LONG &width, LONG &height, Gdiplus::Bitmap *&bitmap) -> void
+auto DrawWindow(HWND hWnd, Gdiplus::Bitmap *bitmap, LONG x, LONG y, LONG width, LONG height) -> void
 {
 
     // Create a compatible DC and bitmap
@@ -67,7 +67,7 @@ auto withinClosebtn(HWND hWnd, const POINT &currentPos, LONG width, LONG height)
            currentPos.y > 0 && currentPos.y < height / 10;
 }
 
-auto ApplyGaussianBlurTint(Bitmap *bitmap, int blurRadius, Color tint) ->void
+auto ApplyGaussianBlurTint(Bitmap *bitmap, int blurRadius, Color tint) -> void
 {
     int width = bitmap->GetWidth();
     int height = bitmap->GetHeight();
@@ -144,20 +144,43 @@ auto ApplyGaussianBlurTint(Bitmap *bitmap, int blurRadius, Color tint) ->void
 }
 
 // Function to simulate a key press and release for any key
-auto SimulateKeyPress(WORD virtualKey)->void {
+auto SimulateKeyPress(WORD virtualKey) -> void
+{
     // Create an array of INPUT structures
     INPUT inputs[2] = {};
 
     // Set up the INPUT structure for the key press
     inputs[0].type = INPUT_KEYBOARD;
     inputs[0].ki.wVk = virtualKey; // Virtual-key code for the key press
-    inputs[0].ki.dwFlags = 0; // 0 for key press
+    inputs[0].ki.dwFlags = 0;      // 0 for key press
 
     // Set up the INPUT structure for the key release
     inputs[1].type = INPUT_KEYBOARD;
-    inputs[1].ki.wVk = virtualKey; // Virtual-key code for the key release
+    inputs[1].ki.wVk = virtualKey;          // Virtual-key code for the key release
     inputs[1].ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
 
     // Send the inputs
     SendInput(2, inputs, sizeof(INPUT));
+}
+
+auto currentMilliseconds() -> std::uint64_t
+{
+    return GetTickCount64();
+}
+
+auto GetLastErrorAsString() -> std::string
+{
+    DWORD errorMessageID = ::GetLastError();
+    if (errorMessageID == 0)
+    {
+        return std::string(); // No error message has been recorded
+    }
+
+    LPSTR messageBuffer = nullptr;
+    size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+
+    std::string message(messageBuffer, size);
+    LocalFree(messageBuffer);
+    return message;
 }
