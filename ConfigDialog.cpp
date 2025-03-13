@@ -20,11 +20,14 @@ auto ConfigDialog::readConfig() -> void
 			// and explicitly convert it to a string
 			// this is better when there can be corrupted data
 			int i = 0;
+			logInfo("Read config: ", res);
 			for (auto range : split_view)
 			{
 				std::string str(range.begin(), range.end());
 				// logError( (str).c_str(), "Info", MB_OK | MB_ICONINFORMATION);
 				params[i] = safeStoiDefault(str);
+				
+				logInfo("Read config: param[",i, "] = ", str);
 				i++;
 				// break if we reach the end of the array
 				if (i >= params.size()) break;
@@ -42,6 +45,7 @@ auto ConfigDialog::save() -> void
 		std::ofstream outFile(configFile);
 		if (outFile.is_open())
 		{
+			logInfo("Save config: ", params);
 			for (auto param : params)
 			{
 				outFile << std::to_string(param) << ":";
@@ -61,15 +65,37 @@ auto ConfigDialog::fillParamFromEdit() -> void
 	auto view = controlId | std::views::transform([this](auto Id)
 												  { return safeStoiDefault(GetText(Id)); });
 	std::ranges::copy(view, params.begin());
+
+	// Get the selected item from the combo box
+	auto hComboBox = GetDlgItem(IDC_COMBO1);
+	if(hComboBox){
+	    auto x = SendMessageA(hComboBox, CB_GETCURSEL, 0, 0);
+		logInfo("Combo box value: ", x);
+		if (x>=0 and x<=1){
+			params[6] = (int)x ;
+		}
+	}
+
 }
 
 auto ConfigDialog::onInit() -> void
 {
 	int controlId[6] = {IDC_EDIT1, IDC_EDIT2, IDC_EDIT3, IDC_EDIT4, IDC_EDIT5, IDC_EDIT6};
-	for (int i = 0; i < params.size(); i++)
+	for (int i = 0; i < 6; i++)
 	{
 		SetText(controlId[i], std::to_string(params[i]));
 	}
+	auto hComboBox = GetDlgItem(IDC_COMBO1);
+	if(hComboBox){
+		logInfo("Combo box setup");
+        SendMessage(hComboBox, CB_RESETCONTENT, 0, 0); // Clear any existing items
+
+        // Add items to the combo box and set selected index
+        SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"DDAPI");
+        SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"WIN32");
+		SendMessageA(hComboBox, CB_SETCURSEL, params[6], 0);
+	}
+
 }
 
 auto ConfigDialog::handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> LRESULT
@@ -82,12 +108,12 @@ auto ConfigDialog::handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> 
 			fillParamFromEdit();
 			save();
 		}
-		// fall through to IDCANCEL
+	// NOTE fall through to IDCANCEL
 	case IDCANCEL:
 		endDialog(wParam);
 		return TRUE;
 	case IDC_RESET:
-		params = {430, 100, 430, 200, 25, 1080};
+		params = {430, 100, 430, 200, 25, 1080, 0};
 		onInit();
 		return TRUE;
 	default:
@@ -139,4 +165,8 @@ auto ConfigDialog::Speed() const -> int
 auto ConfigDialog::ComboThreshold() const -> int
 {
 	return params[5];
+}
+
+auto ConfigDialog::ScreenCaptureMethod() const -> int {
+	return params[6];
 }

@@ -1,5 +1,8 @@
 #include "utils.h"
 #include <versionhelpers.h>
+#include <Shlwapi.h>
+
+#pragma comment (lib, "shlwapi.lib")
 using namespace Gdiplus;
 
 auto getUserProfile() -> std::string
@@ -201,4 +204,60 @@ auto GetDesktopScreenRect() -> std::tuple<RECT, float>
     float scaleFactorX = static_cast<float>(dpiX) / 96.0f; 
 
     return {RECT{0, 0, screenWidth, screenHeight}, scaleFactorX};
+}
+
+auto LoadBitmapFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR resourceType) -> Gdiplus::Bitmap *
+{
+    HRSRC hResource = FindResource(hInstance, resourceName, resourceType);
+    if (!hResource){
+        logError("Load Bitmap Resource Error Line", __LINE__ );
+        return nullptr;
+    }
+
+    HGLOBAL hLoadedResource = LoadResource(hInstance, hResource);
+    if (!hLoadedResource){
+        logError("Load Bitmap Resource Error Line", __LINE__ );
+        return nullptr;
+    }
+
+    LPVOID pLockedResource = LockResource(hLoadedResource);
+    DWORD dwResourceSize = SizeofResource(hInstance, hResource);
+    if (!pLockedResource || dwResourceSize == 0){
+        logError("Load Bitmap Resource Error Line", __LINE__ );
+        return nullptr;
+    }
+
+    HANDLE hHeap = GetProcessHeap();
+    LPVOID pHeapBuffer = HeapAlloc(hHeap, 0, dwResourceSize);
+    if (!pHeapBuffer){
+        logError("Load Bitmap Resource Error Line", __LINE__ );
+        return nullptr;
+    }
+
+    CopyMemory(pHeapBuffer, pLockedResource, dwResourceSize);
+
+    IStream* pStream = nullptr;
+    if (CreateStreamOnHGlobal(NULL, TRUE, &pStream) != S_OK)
+    {
+        HeapFree(hHeap, 0, pHeapBuffer);
+        logError("Load Bitmap Resource Error Line", __LINE__ );
+        return nullptr;
+    }
+
+    // Create a stream from the heap buffer
+    IStream* pMemoryStream = SHCreateMemStream(static_cast<BYTE*>(pHeapBuffer), dwResourceSize);
+    if (!pMemoryStream)
+    {
+        HeapFree(hHeap, 0, pHeapBuffer);
+        logError("Load Bitmap Resource Error Line", __LINE__ );
+        return nullptr;
+    }
+
+    Bitmap* pBitmap = Bitmap::FromStream(pMemoryStream);
+    pMemoryStream->Release();
+
+    // Free the heap buffer
+    HeapFree(hHeap, 0, pHeapBuffer);
+
+    return pBitmap;
 }

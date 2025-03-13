@@ -13,7 +13,7 @@ class ConfigDialog : public BaseDialog<ConfigDialog>
 {
 private:
 	using BaseDialog::BaseDialog;
-	std::array<int, 6> params = {430, 100, 430, 200, 25, 1080};
+	std::array<int, 7> params = {430, 100, 430, 200, 25, 1080, 0};
 	std::string configFile;
 
 	/**
@@ -31,8 +31,8 @@ private:
 	 */
 	auto fillParamFromEdit() -> void;
 public:
-    //Note: onInit and handleCommand should be public in the derived class
-	//Note: to make static polymorphism work. or we should make BaseDialog a friend class
+    // NOTE onInit and handleCommand should be public in the derived class
+	// NOTE to make static polymorphism work. or we should make BaseDialog a friend class
 	/**
 	 * @brief Initializes the dialog box.
 	 */
@@ -98,4 +98,11 @@ public:
 	 * @return The combo threshold.
 	 */
 	auto ComboThreshold() const -> int;
+
+	/**
+	 * @brief Gets the screen capture method
+	 * 
+	 * @return 0 for DDAPI, 1 WIN32API
+	 */
+	auto ScreenCaptureMethod() const -> int;
 };

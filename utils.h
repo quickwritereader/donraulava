@@ -91,6 +91,32 @@ auto GetLastErrorAsString()->std::string;
 auto GetDesktopScreenRect()-> std::tuple<RECT, float>;
 
 
+/**
+ * @brief Load a Bitmap image from a resource.
+ *
+ * @param hInstance Handle to the instance.
+ * @param resourceName Name of the resource.
+ * @param resourceType Type of the resource.
+ * @return Gdiplus::Bitmap* Pointer to the loaded bitmap.
+ */
+auto LoadBitmapFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR resourceType) -> Gdiplus::Bitmap *;
+
+template <typename T, std::size_t N>
+std::ostream& operator<<(std::ostream& os, const std::array<T, N>& arr)
+{
+    os << "[";
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        os << arr[i];
+        if (i < N - 1)
+        {
+            os << ", ";
+        }
+    }
+    os << "]";
+    return os;
+}
+
 // Function template to log error messages with space-separated variables using OutputDebugString
 template <typename... Args>
 void log(const std::string& messageType, Args&&... args) {

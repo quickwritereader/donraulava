@@ -91,5 +91,49 @@
         "unordered_set": "cpp",
         "xhash": "cpp",
         "xtree": "cpp"
-    }
+    },
+    "better-comments.tags": [
+        {
+            "tag": "TODO",
+            "color": "#FF8800", // Orange
+            "strikethrough": false,
+            "bold": true,
+            "backgroundColor": "transparent"
+        },
+        {
+            "tag": "NOTE", 
+            "strikethrough": false,
+            "bold": true,
+            "color": "#FF4500",
+            "backgroundColor": "transparent"
+        },
+        {
+            "tag": "FIXME",
+            "color": "#FF0000", // Red
+            "strikethrough": false,
+            "bold": true,
+            "backgroundColor": "transparent"
+        },
+        {
+            "tag": "IMPORTANT",
+            "color": "#FF00FF", // Magenta
+            "strikethrough": false,
+            "bold": true,
+            "backgroundColor": "transparent"
+        },
+        {
+            "tag": "HACK",
+            "color": "#FF4500", // OrangeRed
+            "strikethrough": false,
+            "bold": true,
+            "backgroundColor": "transparent"
+        },
+        {
+            "tag": "QUESTION",
+            "color": "#1E90FF", // DodgerBlue
+            "strikethrough": false,
+            "bold": true,
+            "backgroundColor": "transparent"
+        }
+   ],
 }

@@ -47,6 +47,14 @@ public:
 	std::string GetText(int controlID) const;
 
 	/**
+	 * @brief Get a handle to a dialog item.
+	 * 
+	 * @param controlID The ID of the control.
+	 * @return The handle to the control.
+	 */
+	auto GetDlgItem(int controlID) -> HWND;
+
+	/**
 	 * @brief End the dialog.
 	 * 
 	 * @param wParam Additional message-specific information.
@@ -118,7 +126,7 @@ auto BaseDialog<Derived>::open() -> void
 template <typename Derived>
 bool BaseDialog<Derived>::SetText(int controlID, const std::string &text)
 {
-	HWND hControl = GetDlgItem(self, controlID);
+	HWND hControl = ::GetDlgItem(self, controlID);
 	if (!hControl)
 	{
 		logError( GetLastErrorAsString());
@@ -130,7 +138,7 @@ bool BaseDialog<Derived>::SetText(int controlID, const std::string &text)
 template <typename Derived>
 std::string BaseDialog<Derived>::GetText(int controlID) const
 {
-	HWND hControl = GetDlgItem(self, controlID);
+	HWND hControl = ::GetDlgItem(self, controlID);
 	if (!hControl)
 	{
 		logError( GetLastErrorAsString());
@@ -147,6 +155,12 @@ std::string BaseDialog<Derived>::GetText(int controlID) const
 	text.resize(length + 1);
 	GetWindowTextA(hControl, text.data(), length + 1);
 	return text;
+}
+
+
+template <typename Derived>
+auto BaseDialog<Derived>::GetDlgItem(int controlID) -> HWND {
+	return ::GetDlgItem(self, controlID);
 }
 
 template <typename Derived>

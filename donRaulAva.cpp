@@ -4,7 +4,6 @@
 #include "donRaulAva.h"
 #include "WinApiScreenCapture.h"
 #include "DesktopDuplicateCapture.h"
-
 // Global Variables:
 
 Gdiplus::Bitmap *bitmap;
@@ -37,8 +36,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
 
     // Load the image
-    //  Load the PNG image using GDI+
-    bitmap = new Gdiplus::Bitmap(L"raul.png");
+    // Load the PNG image using GDI+
+    bitmap = LoadBitmapFromResource(hInstance, MAKEINTRESOURCE(IDR_RAUL_PNG), "PNG");
     // Get the bitmap size
     LONG width = (LONG)bitmap->GetWidth();
     LONG height = (LONG)bitmap->GetHeight();
@@ -200,13 +199,13 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     auto h = CurrentMilliseconds();
                     cv::Mat screen = screenCapture.grabScreen(ScreenRect);
                     h = CurrentMilliseconds() - h;
-                    logInfo(h, "Capture Time");
+                    logInfo( "Capture Time ",h);
                     cv::imwrite("screen.jpg", screen);
                     h = CurrentMilliseconds();
                     cv::Mat screendd = screenCaptureDDP.grabScreen(ScreenRect);
                     h = CurrentMilliseconds() - h;
 
-                    logInfo(h, "Capture Time");
+                    logInfo("Capture Time DDAPI ", h);
                     cv::imwrite("screen_dd.jpg", screendd);
                 }
                 startTick = CurrentMilliseconds();
