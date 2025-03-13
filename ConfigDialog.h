@@ -30,11 +30,13 @@ private:
 	 * @brief Fills the parameters from the edit controls in the dialog.
 	 */
 	auto fillParamFromEdit() -> void;
-
+public:
+    //Note: onInit and handleCommand should be public in the derived class
+	//Note: to make static polymorphism work. or we should make BaseDialog a friend class
 	/**
 	 * @brief Initializes the dialog box.
 	 */
-	virtual auto onInit() -> void;
+	auto onInit() -> void;
 
 	/**
 	 * @brief Handles command messages sent to the dialog box.
@@ -44,9 +46,9 @@ private:
 	 * @param lParam Additional message information.
 	 * @return The result of the message processing.
 	 */
-	virtual auto handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> LRESULT;
+	auto handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> LRESULT;
 
-public:
+
 	/**
 	 * @brief Constructs a ConfigDialog object.
 	 *

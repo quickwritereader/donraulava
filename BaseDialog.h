@@ -7,8 +7,8 @@
  * @brief A base class template for creating dialogs in a Windows application.
  * 
  * This class provides a base implementation for creating and managing dialogs.
- * Derived classes should implement the pure virtual functions `handleCommand` and `onInit`.
- * 
+ * Derived classes should implement the onInit and handleCommand methods to handle
+ * to achieve static polymorphism. 
  * @tparam Derived The derived class type.
  */
 template <typename Derived>
@@ -61,12 +61,12 @@ public:
 	 * @param lParam Additional message-specific information.
 	 * @return The result of the message processing.
 	 */
-	virtual auto handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> LRESULT = 0;
+	auto handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> LRESULT;
 
 	/**
 	 * @brief Initialize the dialog.
 	 */
-	virtual auto onInit() -> void = 0;
+	auto onInit() -> void;
 
 private:
 	HWND self = nullptr; ///< Handle to the dialog.
@@ -150,6 +150,20 @@ std::string BaseDialog<Derived>::GetText(int controlID) const
 }
 
 template <typename Derived>
+auto BaseDialog<Derived>::onInit() -> void
+{ 
+	//static polymorphism using CRTP
+	static_cast<Derived *>(this)->onInit();
+}
+
+template <typename Derived>
+auto BaseDialog<Derived>::handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> LRESULT
+{
+ //static polymorphism using CRTP
+	return 	static_cast<Derived *>(this)->handleCommand(message, wParam, lParam);
+}
+
+template <typename Derived>
 void BaseDialog<Derived>::endDialog(WPARAM wParam)
 {
 	::EndDialog(self, LOWORD(wParam));
@@ -177,13 +191,13 @@ LRESULT CALLBACK BaseDialog<Derived>::DialogProc(HWND hDlg, UINT message, WPARAM
 	{
 	case WM_INITDIALOG:
 	{
-		auto pDlg = reinterpret_cast<Derived *>(lParam);
+		auto pDlg = reinterpret_cast<BaseDialog *>(lParam);
 		SetWindowLongPtr(hDlg, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pDlg));
 		pDlg->self = hDlg;
 		return pDlg->proc(message, wParam, lParam);
 	}
 	default:
-		auto dlg = reinterpret_cast<Derived *>(GetWindowLongPtr(hDlg, GWLP_USERDATA));
+		auto dlg = reinterpret_cast<BaseDialog *>(GetWindowLongPtr(hDlg, GWLP_USERDATA));
 		return dlg->proc(message, wParam, lParam);
 	}
 	return (INT_PTR)FALSE;
