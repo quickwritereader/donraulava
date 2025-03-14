@@ -12,6 +12,7 @@ WinApiScreenCapture::~WinApiScreenCapture()
     // Release DCs
     ReleaseDC(nullptr, hScreenDC);
     DeleteDC(hMemoryDC);
+    logInfo("WinApiScreenCapture destructor called");
 }
 
 cv::Mat HBitmapToMat(HDC hdc, HBITMAP hBitmap)

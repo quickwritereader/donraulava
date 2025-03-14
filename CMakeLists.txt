@@ -34,6 +34,8 @@ add_executable(donRaulAva WIN32
   "WinApiScreenCapture.cpp"
   "DesktopDuplicateCapture.cpp"
   "ConfigDialog.cpp"
+  "DetectLoop.cpp"
+  "cv_utils.cpp"
   "resource.rc"
 )
 target_include_directories(donRaulAva PRIVATE ${OpenCV_INCLUDE_DIRS})
@@ -47,24 +49,24 @@ if(CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET donRaulAva PROPERTY CXX_STANDARD 20)
 endif() 
 # Embed standard library for both GCC and MSVC
-if(MSVC)
-    foreach(flag_var
-        CMAKE_C_FLAGS
-        CMAKE_C_FLAGS_DEBUG
-        CMAKE_C_FLAGS_RELEASE
-        CMAKE_C_FLAGS_MINSIZEREL
-        CMAKE_C_FLAGS_RELWITHDEBINFO
-        CMAKE_CXX_FLAGS
-        CMAKE_CXX_FLAGS_DEBUG
-        CMAKE_CXX_FLAGS_RELEASE
-        CMAKE_CXX_FLAGS_MINSIZEREL
-        CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-        if(${flag_var} MATCHES "/MD")
-            string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-        endif()
-    endforeach()
-else()
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
-endif()
+# if(MSVC)
+#     foreach(flag_var
+#         CMAKE_C_FLAGS
+#         CMAKE_C_FLAGS_DEBUG
+#         CMAKE_C_FLAGS_RELEASE
+#         CMAKE_C_FLAGS_MINSIZEREL
+#         CMAKE_C_FLAGS_RELWITHDEBINFO
+#         CMAKE_CXX_FLAGS
+#         CMAKE_CXX_FLAGS_DEBUG
+#         CMAKE_CXX_FLAGS_RELEASE
+#         CMAKE_CXX_FLAGS_MINSIZEREL
+#         CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+#         if(${flag_var} MATCHES "/MD")
+#             string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+#         endif()
+#     endforeach()
+# else()
+#     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+# endif()
 
 # TODO: Add tests and install targets if needed.

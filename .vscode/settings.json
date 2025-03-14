@@ -90,7 +90,8 @@
         "unordered_map": "cpp",
         "unordered_set": "cpp",
         "xhash": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "semaphore": "cpp"
     },
     "better-comments.tags": [
         {

@@ -2,14 +2,15 @@
 //
 
 #include "donRaulAva.h"
-#include "WinApiScreenCapture.h"
-#include "DesktopDuplicateCapture.h"
+#include "DetectLoop.h"
 // Global Variables:
 
 Gdiplus::Bitmap *bitmap;
 Gdiplus::Bitmap *glowBitmap;
 RECT ScreenRect;
 float ScaleFactor;
+DetectLoop detectLoop;
+
 auto checkCloseBtnAnimation(HWND hWnd, Gdiplus::Bitmap *bitmap, const POINT &currentPos) -> void;
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -78,7 +79,16 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
         logError("Call to RegisterClassEx failed!", "DonRaulito");
         return 1;
     }
+   
 
+    // Note: The lambda function captures the static storage duration variable 'detectLoop' by reference.
+    // This ensures that the lambda has access to the same instance of 'detectLoop' throughout its execution.
+    // Capturing by reference is crucial here because 'detectLoop' is a global variable and we want to
+    // operate on the same instance across different parts of the program.
+    std::jthread detectThread([](std::stop_token stopToken, DetectLoop &dlooper) mutable {
+        dlooper.loop(stopToken);
+    },std::ref(detectLoop));
+ 
     // Create the window
     HWND hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE, wcex.lpszClassName, TEXT("Don Raulito"),
                                WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -108,6 +118,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     // Release the mutex when the program exits
     ReleaseMutex(hMutex);
     CloseHandle(hMutex);
+    //notify our loop for end
+    detectLoop.stop();
+    detectThread.request_stop();
+    detectThread.join();
     delete bitmap;
     delete glowBitmap;
     return (int)msg.wParam;
@@ -130,6 +144,7 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
         glInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
+        config = new ConfigDialog(glInstance, hWnd);
         break;
     // explicit dragging without using NCHITTEST overriding
     case WM_LBUTTONDOWN:
@@ -189,24 +204,18 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else
             {
+                
+                // Simulate double-click
                 if (CurrentMilliseconds() - startTick < 1000)
                 {
                     currentBitmap = currentBitmap == bitmap ? glowBitmap : bitmap;
                     DrawWindow(hWnd, currentBitmap, windowRect.left, windowRect.top, width, height);
-                    // capture screen
-                    WinApiScreenCapture screenCapture;
-                    DesktopDuplicationCapture screenCaptureDDP;
-                    auto h = CurrentMilliseconds();
-                    cv::Mat screen = screenCapture.grabScreen(ScreenRect);
-                    h = CurrentMilliseconds() - h;
-                    logInfo( "Capture Time ",h);
-                    cv::imwrite("screen.jpg", screen);
-                    h = CurrentMilliseconds();
-                    cv::Mat screendd = screenCaptureDDP.grabScreen(ScreenRect);
-                    h = CurrentMilliseconds() - h;
-
-                    logInfo("Capture Time DDAPI ", h);
-                    cv::imwrite("screen_dd.jpg", screendd);
+                    if(currentBitmap == glowBitmap){
+                        detectLoop.setParameters(ScreenRect, *config, true);
+                        detectLoop.start();
+                    }else{
+                        detectLoop.stop();
+                    }
                 }
                 startTick = CurrentMilliseconds();
             }
@@ -215,15 +224,10 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
         return 0;
     case WM_RBUTTONUP:
-        if (!config)
-        {
-            config = new ConfigDialog(glInstance, hWnd);
-            // MessageBox(hWnd, "Button bbdddb clicked!", "Notification", MB_OK);
-            // OutputDebugString("ok");
-        }
         config->open();
         break;
     case WM_DESTROY:
+        logInfo("Destroying window", "DonRaulito");
         PostQuitMessage(0);
         delete config;
         break;

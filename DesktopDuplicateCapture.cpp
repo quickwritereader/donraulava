@@ -7,6 +7,7 @@ DesktopDuplicationCapture::DesktopDuplicationCapture(UINT OutputNumber) {
 
 DesktopDuplicationCapture::~DesktopDuplicationCapture() {
     Close();
+    logInfo("DesktopDuplicationCapture destructor called");
 }
 
 auto DesktopDuplicationCapture::Initialize(UINT OutputNumber) ->void{
@@ -142,7 +143,7 @@ auto DesktopDuplicationCapture::CaptureNext(const RECT& region) ->bool{
     desc.BindFlags = 0;
     desc.MiscFlags = 0;  // Setting MiscFlags to 0
     ID3D11Texture2D* cpuTex = nullptr;
-    logInfo("Texture description: Width =", desc.Width, "Height =", desc.Height, "Format =", desc.Format, "ArraySize =", desc.ArraySize, "MipLevels =", desc.MipLevels, "SampleDesc.Count =", desc.SampleDesc.Count, "SampleDesc.Quality =", desc.SampleDesc.Quality, "CPUAccessFlags =", desc.CPUAccessFlags, "Usage =", desc.Usage, "BindFlags =", desc.BindFlags, "MiscFlags =", desc.MiscFlags);
+    //logInfo("Texture description: Width =", desc.Width, "Height =", desc.Height, "Format =", desc.Format, "ArraySize =", desc.ArraySize, "MipLevels =", desc.MipLevels, "SampleDesc.Count =", desc.SampleDesc.Count, "SampleDesc.Quality =", desc.SampleDesc.Quality, "CPUAccessFlags =", desc.CPUAccessFlags, "Usage =", desc.Usage, "BindFlags =", desc.BindFlags, "MiscFlags =", desc.MiscFlags);
 
     hr = D3DDevice->CreateTexture2D(&desc, nullptr, &cpuTex);
     if (FAILED(hr)) {
