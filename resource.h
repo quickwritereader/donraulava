@@ -15,6 +15,7 @@
 #define  IDC_RESET                        1009
 #define IDI_APP_ICON 111
 #define IDR_RAUL_PNG 112
+#define IDR_TMPL_JPG 113
 // Next default values for new objects
 // 
 

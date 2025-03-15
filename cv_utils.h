@@ -1,5 +1,3 @@
-
-
 #pragma once
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
@@ -73,3 +71,15 @@ auto preprocessImageForEdges(const cv::Mat& img)->cv::Mat;
  * @return An optional RECT structure containing the detected border if found, otherwise std::nullopt.
  */
 auto detectBorder(const cv::Mat &screen, int minLineLength=100) -> std::optional<RECT>;
+
+/**
+ * @brief Loads an image from a resource.
+ * 
+ * This function loads an image from a specified resource within an application instance.
+ * 
+ * @param hInstance Handle to the application instance.
+ * @param resourceName Name of the resource to load.
+ * @param resourceType Type of the resource to load.
+ * @return A cv::Mat containing the loaded image.
+ */
+auto LoadMatFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR resourceType) -> cv::Mat;

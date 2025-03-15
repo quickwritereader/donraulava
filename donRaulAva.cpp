@@ -38,7 +38,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
     // Load the image
     // Load the PNG image using GDI+
-    bitmap = LoadBitmapFromResource(hInstance, MAKEINTRESOURCE(IDR_RAUL_PNG), "PNG");
+    bitmap = LoadBitmapFromResource(hInstance, MAKEINTRESOURCEA(IDR_RAUL_PNG), "PNG");
     // Get the bitmap size
     LONG width = (LONG)bitmap->GetWidth();
     LONG height = (LONG)bitmap->GetHeight();
@@ -80,14 +80,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
         return 1;
     }
    
-
-    // Note: The lambda function captures the static storage duration variable 'detectLoop' by reference.
-    // This ensures that the lambda has access to the same instance of 'detectLoop' throughout its execution.
-    // Capturing by reference is crucial here because 'detectLoop' is a global variable and we want to
-    // operate on the same instance across different parts of the program.
-    std::jthread detectThread([](std::stop_token stopToken, DetectLoop &dlooper) mutable {
-        dlooper.loop(stopToken);
-    },std::ref(detectLoop));
+    detectLoop.setTrackObj(LoadMatFromResource(hInstance, MAKEINTRESOURCEA(IDR_TMPL_JPG),"JPG"));
+    detectLoop.start();
  
     // Create the window
     HWND hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE, wcex.lpszClassName, TEXT("Don Raulito"),
@@ -118,10 +112,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     // Release the mutex when the program exits
     ReleaseMutex(hMutex);
     CloseHandle(hMutex);
-    //notify our loop for end
     detectLoop.stop();
-    detectThread.request_stop();
-    detectThread.join();
     delete bitmap;
     delete glowBitmap;
     return (int)msg.wParam;
@@ -212,9 +203,9 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     DrawWindow(hWnd, currentBitmap, windowRect.left, windowRect.top, width, height);
                     if(currentBitmap == glowBitmap){
                         detectLoop.setParameters(ScreenRect, *config, true);
-                        detectLoop.start();
+                        detectLoop.resume();
                     }else{
-                        detectLoop.stop();
+                        detectLoop.pause();
                     }
                 }
                 startTick = CurrentMilliseconds();

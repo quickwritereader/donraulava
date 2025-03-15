@@ -216,3 +216,39 @@ auto detectBorder(const cv::Mat &screen, int minLineLength) -> std::optional<REC
 
 #endif
 }
+
+
+
+auto LoadMatFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR resourceType) -> cv::Mat
+{
+    HRSRC hResource = FindResource(hInstance, resourceName, resourceType);
+    if (!hResource) {
+        logError("Load Mat Resource Error Line", __LINE__);
+        return cv::Mat();
+    }
+
+    HGLOBAL hLoadedResource = LoadResource(hInstance, hResource);
+    if (!hLoadedResource) {
+        logError("Load Mat Resource Error Line", __LINE__);
+        return cv::Mat();
+    }
+
+    LPVOID pLockedResource = LockResource(hLoadedResource);
+    DWORD dwResourceSize = SizeofResource(hInstance, hResource);
+    if (!pLockedResource || dwResourceSize == 0) {
+        logError("Load Mat Resource Error Line", __LINE__);
+        return cv::Mat();
+    }
+
+    std::vector<BYTE> buffer(dwResourceSize);
+    memcpy(buffer.data(), pLockedResource, dwResourceSize);
+    //the below code is no-op on modern win32
+    UnlockResource(pLockedResource);
+
+    cv::Mat mat = cv::imdecode(buffer, cv::IMREAD_UNCHANGED);
+    if (mat.empty()) {
+        logError("Decode Mat Resource Error Line", __LINE__);
+    }
+
+    return mat;
+}

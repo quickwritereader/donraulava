@@ -235,6 +235,7 @@ auto LoadBitmapFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR r
     }
 
     CopyMemory(pHeapBuffer, pLockedResource, dwResourceSize);
+    UnlockResource(pLockedResource);
 
     IStream* pStream = nullptr;
     if (CreateStreamOnHGlobal(NULL, TRUE, &pStream) != S_OK)
@@ -261,3 +262,4 @@ auto LoadBitmapFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR r
 
     return pBitmap;
 }
+

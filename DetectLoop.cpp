@@ -34,10 +34,17 @@ auto doubleRectCoords(const std::optional<RECT>& rectOpt)->std::optional<RECT>{
 auto DetectLoop::loop(std::stop_token stopToken) -> void
 {
 
-    std::unique_ptr<ScreenCapture> screenCapture;
+    std::unique_ptr<ScreenCapture> screenCapture; 
 
-    // Create tempCaptures folder if it does not exist
+    // Create tempCaptures folder path to log pictures
     std::string path = getUserProfile() + "\\tempCaptures";
+    auto matchScale=1.0;
+    cv::Mat leftTemplate, rightTemplate, upTemplate, downTemplate;
+    cv::cvtColor(trackObject, upTemplate, cv::COLOR_BGR2GRAY);
+    cv::rotate(upTemplate, leftTemplate, cv::ROTATE_90_COUNTERCLOCKWISE);
+    cv::rotate(upTemplate, rightTemplate, cv::ROTATE_90_CLOCKWISE);
+    cv::rotate(leftTemplate, downTemplate, cv::ROTATE_90_COUNTERCLOCKWISE);
+
 
     while (!stopToken.stop_requested())
     {
@@ -59,9 +66,10 @@ auto DetectLoop::loop(std::stop_token stopToken) -> void
         int dc = 0;
         constexpr int DCMAX = 100;
         int fps = 0;
-        auto last = CurrentMilliseconds();
+        auto totalElapsed = 0.0;
         while (m_loop && !stopToken.stop_requested())
         {
+            auto start=CurrentMilliseconds();
             if (!screenCapture)
             {
                 logInfo("DetectLoop loop inner loop Screen Capture init", captureMethod);
@@ -86,14 +94,16 @@ auto DetectLoop::loop(std::stop_token stopToken) -> void
             cv::Mat grayScreen;
             cv::cvtColor(screen, grayScreen, cv::COLOR_BGR2GRAY);
             std::optional<RECT> potentialBorder = std::nullopt;
-            auto kk=CurrentMilliseconds();
+            Sleep(1);
             if(borderDetectionCount<=BORDER_MATCH_COUNT) {
                 // Downsample the image
                 cv::resize(grayScreen, grayScreen, cv::Size(), 0.5, 0.5); 
                 potentialBorder = detectBorder(grayScreen, MINIMUM_LINE_LENGTH);
                 potentialBorder = doubleRectCoords(potentialBorder);
+            }else{
+
             }
-            logInfo("detectborder time", CurrentMilliseconds()-kk);
+            
             if (potentialBorder)
             {
 
@@ -129,13 +139,17 @@ auto DetectLoop::loop(std::stop_token stopToken) -> void
                 }
             }
 
-            if (CurrentMilliseconds() - last >= 10000)
+            auto elapsed = CurrentMilliseconds() -start;
+            totalElapsed +=elapsed;
+            if (totalElapsed >= 10000)
             {
-                logInfo("FPS", (float)fps / 10.0);
-                last = CurrentMilliseconds();
+                logInfo("FPS", fps / 10.0);
+                totalElapsed = 0;
                 fps = 0;
-            }
-            Sleep(10);
+            } 
+            //downGrade Fps to reduce cpu usage
+            if (elapsed<55) Sleep(55);
+            else Sleep(10);
             fps++;
         }
 
