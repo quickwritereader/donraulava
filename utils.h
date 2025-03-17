@@ -5,6 +5,8 @@
 #include <string>
 #include <tuple>
 #include <sstream>
+#include <fstream>
+#include <mutex>
 
 /**
  * @brief Draws a window at the specified position with the given dimensions and bitmap.
@@ -57,15 +59,9 @@ auto ApplyGaussianBlurTint(Gdiplus::Bitmap *bitmap, int blurRadius, Gdiplus::Col
  *
  * @return std::string User profile.
  */
-auto getUserProfile() -> std::string;
-/**
- * @brief Safely converts a string to an integer with a default value.
- *
- * @param str String to convert.
- * @param def Default value to return if conversion fails.
- * @return int Converted integer or default value.
- */
-auto safeStoiDefault(const std::string &str, int def = 0) -> int;
+
+auto safeStoiDefault(const std::string &str, int defaultVal = 0) -> int;
+auto safeStoiDefault(const std::wstring &text, int defaultVal=0) -> int
 /**
  * @brief Simulates a key press event.
  *
@@ -82,14 +78,13 @@ auto CurrentMilliseconds() -> std::uint64_t;
 /**
  * @brief Retrieves the last error message as a string.
  */
-auto GetLastErrorAsString()->std::string;
+auto GetLastErrorAsString() -> std::string;
 
 /**
  * @brief Get the desktop screen rectangle
  * Returns a tuple containing the screen rectangle  and the DPI scale factor
  */
-auto GetDesktopScreenRect()-> std::tuple<RECT, float>;
-
+auto GetDesktopScreenRect() -> std::tuple<RECT, float>;
 
 /**
  * @brief Load a Bitmap image from a resource.
@@ -99,10 +94,10 @@ auto GetDesktopScreenRect()-> std::tuple<RECT, float>;
  * @param resourceType Type of the resource.
  * @return Gdiplus::Bitmap* Pointer to the loaded bitmap.
  */
-auto LoadBitmapFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR resourceType) -> Gdiplus::Bitmap *;
+auto LoadBitmapFromResource(HINSTANCE hInstance, LPCSTR resourceName, LPCSTR resourceType) -> Gdiplus::Bitmap *;
 
 template <typename T, std::size_t N>
-std::ostream& operator<<(std::ostream& os, const std::array<T, N>& arr)
+std::ostream &operator<<(std::ostream &os, const std::array<T, N> &arr)
 {
     os << "[";
     for (std::size_t i = 0; i < N; ++i)
@@ -117,28 +112,117 @@ std::ostream& operator<<(std::ostream& os, const std::array<T, N>& arr)
     return os;
 }
 
+
+class LogToFile
+{
+public:
+    // Public method to get the instance of the singleton
+    static LogToFile &getInstance()
+    {
+        static LogToFile instance; // Guaranteed to be thread-safe in C++11 and above
+        return instance;
+    }
+
+    // Method to write a log message
+    void log(const std::string &message);
+
+    // Method to set the verbose level
+    void setVerboseLevel(int verboseLevel)
+    {
+        verbose = verboseLevel;
+    }   
+
+    int getVerboseLevel()
+    {
+        return verbose;
+    }
+
+
+    // our opencv can't handle unicode paths
+    // so we set the current working directory to the user profile
+    // to avoid any issues
+    static auto setCurrentWorkingDirectoryToUserProfile(std::string folderName=".donRaulTemp")->void;
+    
+
+private:
+    std::ofstream logFile_;
+    std::mutex mutex_;
+    int verbose = 0;
+
+    // Private constructor
+    LogToFile()
+    {
+        logFile_.open("log.txt");
+        if (!logFile_)
+        {
+            OutputDebugStringA("Failed to open log file\n");
+        }else{
+            log("--------------------------");
+        }
+    }
+
+    // Private destructor
+    ~LogToFile()
+    {
+        if (logFile_.is_open())
+        {
+            logFile_.close();
+        }
+    }
+
+    // Delete copy constructor and assignment operator to prevent copying
+    LogToFile(const LogToFile &) = delete;
+    LogToFile &operator=(const LogToFile &) = delete;
+}; // class LogToFile
+
+
+#if !defined(OUTPUT_DBGVIEW)
+#define OUTPUT_LOG(x)  \
+    do                 \
+    {                  \
+        LogToFile::getInstance().log(x); \
+    } while (0)
+#else
+#define OUTPUT_LOG(x)          \
+    do                         \
+    {                          \
+        OutputDebugStringA(x); \
+    } while (0)
+#endif
+
 // Function template to log error messages with space-separated variables using OutputDebugString
 template <typename... Args>
-void log(const std::string& messageType, Args&&... args) {
+void log(const std::string &messageType, Args &&...args)
+{
     // Create a string stream to format the error message
     std::ostringstream oss;
-    oss <<"DonRaulito "<< messageType << ": ";
+    oss << "DonRaulito " << messageType << ": ";
 
     // Use a fold expression to append the arguments to the string stream
     ((oss << args << " "), ...);
 
     // Convert the formatted message to a wide string
-    std::string msg = oss.str(); 
+    std::string msg = oss.str();
     // Output the message using OutputDebugString
-    OutputDebugStringA(msg.c_str());
+    OUTPUT_LOG(msg.c_str());
 }
 
 template <typename... Args>
-void logError(Args&&... args) {
-    log("Error", std::forward<Args>(args)...); 
+void logError(Args &&...args)
+{
+    log("Error", std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-void logInfo(Args&&... args) {
-    log("Info", std::forward<Args>(args)...); 
+void logInfo(Args &&...args)
+{
+    if(LogFile::getInstance().getVerboseLevel() > 0){
+        log("Info", std::forward<Args>(args)...);
+    }
 }
+
+/**
+ * @brief Get the first command line argument as an integer.
+ * return 0 if no argument or invalid argument
+ */
+auto getFirstCommandLineArgAsInt() -> int;

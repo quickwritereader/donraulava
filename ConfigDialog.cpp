@@ -113,7 +113,7 @@ auto ConfigDialog::handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> 
 		endDialog(wParam);
 		return TRUE;
 	case IDC_RESET:
-		params = {430, 100, 430, 200, 25, 1080, 0};
+		params = {430, 100, 430, 140, 25, 1080, 0};
 		onInit();
 		return TRUE;
 	default:
@@ -125,7 +125,7 @@ auto ConfigDialog::handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> 
 ConfigDialog::ConfigDialog(HINSTANCE inst, HWND parent) : ConfigDialog(inst, parent, IDD_DIALOG1)
 {
 	// Get user config file
-	configFile = getUserProfile() + "\\donraul.config";
+	configFile = "donraul.config";
 	// Check if file exists
 	if (std::filesystem::exists(configFile))
 	{

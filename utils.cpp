@@ -2,18 +2,51 @@
 #include <versionhelpers.h>
 #include <Shlwapi.h>
 
-#pragma comment (lib, "shlwapi.lib")
+#pragma comment(lib, "shlwapi.lib")
 using namespace Gdiplus;
 
-auto getUserProfile() -> std::string
+auto LogToFile::setCurrentWorkingDirectoryToUserProfile(std::string folderName) -> void
 {
-    char userProfile[MAX_PATH];
-    DWORD size = sizeof(userProfile);
-    GetEnvironmentVariable("USERPROFILE", userProfile, size);
-    return std::string(userProfile);
+    wchar_t *userProfilePath = nullptr;
+    size_t len = 0;
+    _wdupenv_s(&userProfilePath, &len, L"USERPROFILE");
+
+    if (userProfilePath)
+    {
+        std::wstring userProfile(userProfilePath);
+        std::wstring folderPath = userProfile + L"\\" + std::wstring(folderName.begin(), folderName.end());
+
+        if (CreateDirectoryW(folderPath.c_str(), NULL) || GetLastError() == ERROR_ALREADY_EXISTS)
+        {
+            SetCurrentDirectoryW(folderPath.c_str());
+        }
+
+        free(userProfilePath);
+    }
+}
+
+auto LogToFile::log(const std::string &message) -> void
+{
+    std::lock_guard<std::mutex> lock(mutex_); // Ensure thread safety
+    if (logFile_.is_open())
+    {
+        logFile_ << message << std::endl;
+    }
 }
 
 auto safeStoiDefault(const std::string &text, int defaultVal) -> int
+{
+    try
+    {
+        return std::stoi(text);
+    }
+    catch (...)
+    {
+        return defaultVal;
+    }
+}
+
+auto safeStoiDefault(const std::wstring &text, int defaultVal) -> int
 {
     try
     {
@@ -201,60 +234,64 @@ auto GetDesktopScreenRect() -> std::tuple<RECT, float>
     UINT dpi = GetDpiForWindow(hwnd);
     dpiX = dpi;
     // Calculate the scale factors
-    float scaleFactorX = static_cast<float>(dpiX) / 96.0f; 
+    float scaleFactorX = static_cast<float>(dpiX) / 96.0f;
 
     return {RECT{0, 0, screenWidth, screenHeight}, scaleFactorX};
 }
 
-auto LoadBitmapFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR resourceType) -> Gdiplus::Bitmap *
+auto LoadBitmapFromResource(HINSTANCE hInstance, LPCSTR resourceName, LPCSTR resourceType) -> Gdiplus::Bitmap *
 {
-    HRSRC hResource = FindResource(hInstance, resourceName, resourceType);
-    if (!hResource){
-        logError("Load Bitmap Resource Error Line", __LINE__ );
+    HRSRC hResource = FindResourceA(hInstance, resourceName, resourceType);
+    if (!hResource)
+    {
+        logError("Load Bitmap Resource Error Line", __LINE__);
         return nullptr;
     }
 
     HGLOBAL hLoadedResource = LoadResource(hInstance, hResource);
-    if (!hLoadedResource){
-        logError("Load Bitmap Resource Error Line", __LINE__ );
+    if (!hLoadedResource)
+    {
+        logError("Load Bitmap Resource Error Line", __LINE__);
         return nullptr;
     }
 
     LPVOID pLockedResource = LockResource(hLoadedResource);
     DWORD dwResourceSize = SizeofResource(hInstance, hResource);
-    if (!pLockedResource || dwResourceSize == 0){
-        logError("Load Bitmap Resource Error Line", __LINE__ );
+    if (!pLockedResource || dwResourceSize == 0)
+    {
+        logError("Load Bitmap Resource Error Line", __LINE__);
         return nullptr;
     }
 
     HANDLE hHeap = GetProcessHeap();
     LPVOID pHeapBuffer = HeapAlloc(hHeap, 0, dwResourceSize);
-    if (!pHeapBuffer){
-        logError("Load Bitmap Resource Error Line", __LINE__ );
+    if (!pHeapBuffer)
+    {
+        logError("Load Bitmap Resource Error Line", __LINE__);
         return nullptr;
     }
 
     CopyMemory(pHeapBuffer, pLockedResource, dwResourceSize);
     UnlockResource(pLockedResource);
 
-    IStream* pStream = nullptr;
+    IStream *pStream = nullptr;
     if (CreateStreamOnHGlobal(NULL, TRUE, &pStream) != S_OK)
     {
         HeapFree(hHeap, 0, pHeapBuffer);
-        logError("Load Bitmap Resource Error Line", __LINE__ );
+        logError("Load Bitmap Resource Error Line", __LINE__);
         return nullptr;
     }
 
     // Create a stream from the heap buffer
-    IStream* pMemoryStream = SHCreateMemStream(static_cast<BYTE*>(pHeapBuffer), dwResourceSize);
+    IStream *pMemoryStream = SHCreateMemStream(static_cast<BYTE *>(pHeapBuffer), dwResourceSize);
     if (!pMemoryStream)
     {
         HeapFree(hHeap, 0, pHeapBuffer);
-        logError("Load Bitmap Resource Error Line", __LINE__ );
+        logError("Load Bitmap Resource Error Line", __LINE__);
         return nullptr;
     }
 
-    Bitmap* pBitmap = Bitmap::FromStream(pMemoryStream);
+    Bitmap *pBitmap = Bitmap::FromStream(pMemoryStream);
     pMemoryStream->Release();
 
     // Free the heap buffer
@@ -263,3 +300,18 @@ auto LoadBitmapFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR r
     return pBitmap;
 }
 
+auto getFirstCommandLineArgAsInt() -> int
+{
+    int result = 0;
+    LPWSTR *szArglist;
+    int nArgs;
+
+    szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+    if (nullptr != szArglist && nArgs > 1)
+    {
+        result = safeStoiDefault(szArglist[1], 0);
+    }
+    if (szArglist) LocalFree(szArglist);
+
+    return result;
+}

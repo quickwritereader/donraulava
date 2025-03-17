@@ -119,7 +119,10 @@ auto DesktopDuplicationCapture::CaptureNext(const RECT& region) ->bool{
     IDXGIResource* deskRes = nullptr;
     DXGI_OUTDUPL_FRAME_INFO frameInfo;
     hr = DeskDupl->AcquireNextFrame(0, &frameInfo, &deskRes);
-    if (hr == DXGI_ERROR_WAIT_TIMEOUT) return false;
+    if (hr == DXGI_ERROR_WAIT_TIMEOUT){
+        logInfo("AcquireNextFrame timeout");
+        return false;
+    } 
     if (FAILED(hr)) {
         logError("AcquireNextFrame failed", hr);
         return false;
@@ -182,8 +185,10 @@ auto DesktopDuplicationCapture::CaptureNext(const RECT& region) ->bool{
     return true;
 }
 
-auto DesktopDuplicationCapture::grabScreen(RECT region) ->cv::Mat{
-    CaptureNext(region);
+auto DesktopDuplicationCapture::grabScreen(RECT region) ->std::optional<cv::Mat>{
+    if(!CaptureNext(region)){
+        return std::nullopt;
+    }
     return cv::Mat(Latest.Height, Latest.Width, CV_8UC4, (void*)Latest.Buf.data()).clone();
 }
 

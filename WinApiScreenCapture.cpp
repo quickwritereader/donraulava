@@ -46,7 +46,7 @@ cv::Mat HBitmapToMat(HDC hdc, HBITMAP hBitmap)
 
 }
 
-auto WinApiScreenCapture::grabScreen(RECT region) -> cv::Mat
+auto WinApiScreenCapture::grabScreen(RECT region) -> std::optional<cv::Mat>
 {
     // Capture screen using Win32 API
     int width = region.right - region.left;

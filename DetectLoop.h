@@ -35,7 +35,6 @@ public:
     DetectLoop(const cv::Mat &trackObject = cv::Mat()) : m_loop(false)
     {
         this->trackObject = trackObject;
-        logInfo("DetectLoop constructor", id);
     }
 
     /**

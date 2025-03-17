@@ -36,7 +36,7 @@ public:
      * @param region The region of the screen to capture.
      * @return A cv::Mat object containing the captured screen region.
      */
-    cv::Mat grabScreen(RECT region) override;
+    std::optional<cv::Mat> grabScreen(RECT region) override;
 
 private:
     /**

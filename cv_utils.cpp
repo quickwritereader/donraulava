@@ -1,8 +1,10 @@
 #include "utils.h"
 #include <algorithm>
 #include "cv_utils.h"
-
-auto matchTemplateInRegion(const cv::Mat &img, const cv::Mat &templ, cv::Rect region, int method, double match_threshold, bool debug) -> std::vector<cv::Point>
+#ifdef HAVE_OPENCV_OCL
+#include <opencv2/core/ocl.hpp>
+#endif 
+auto matchTemplateInRegion(const cv::Mat &img, const cv::Mat &templ, cv::Rect region,int method) -> cv::Mat
 {
     // Adjust the region if it exceeds the image boundaries
     region.x = std::max(region.x, 0);
@@ -13,40 +15,11 @@ auto matchTemplateInRegion(const cv::Mat &img, const cv::Mat &templ, cv::Rect re
     // Extract the region of interest (ROI) from the image
     cv::Mat img_region = img(region);
 
-    // Determine if the ROI needs to be converted to grayscale
-    cv::Mat img_gray;
-    if (img_region.channels() == 3)
-    {
-        cv::cvtColor(img_region, img_gray, cv::COLOR_BGR2GRAY);
-    }
-    else
-    {
-        img_gray = img_region; // This does not copy the data, only references it
-    }
-
-    // Convert the template to grayscale if it's not already
-    cv::Mat templ_gray;
-    if (templ.channels() == 3)
-    {
-        cv::cvtColor(templ, templ_gray, cv::COLOR_BGR2GRAY);
-    }
-    else
-    {
-        templ_gray = templ;
-    }
 
     // Match the template in the ROI
     cv::Mat result;
-    cv::matchTemplate(img_gray, templ_gray, result, method);
-
-    // Apply the threshold to get the matching locations
-    cv::threshold(result, result, match_threshold, 1.0, cv::THRESH_TOZERO);
-
-    // Find non-zero locations in the result
-    std::vector<cv::Point> locations;
-    cv::findNonZero(result, locations);
-
-    return locations;
+    cv::matchTemplate(img_region, templ, result, method); 
+    return result;
 }
 auto detectLines(const cv::Mat &img, int minLineLength) -> std::vector<cv::Vec4i>
 {
@@ -219,9 +192,9 @@ auto detectBorder(const cv::Mat &screen, int minLineLength) -> std::optional<REC
 
 
 
-auto LoadMatFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR resourceType) -> cv::Mat
+auto LoadMatFromResource(HINSTANCE hInstance, LPCSTR resourceName, LPCSTR resourceType) -> cv::Mat
 {
-    HRSRC hResource = FindResource(hInstance, resourceName, resourceType);
+    HRSRC hResource = FindResourceA(hInstance, resourceName, resourceType);
     if (!hResource) {
         logError("Load Mat Resource Error Line", __LINE__);
         return cv::Mat();
@@ -251,4 +224,67 @@ auto LoadMatFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR reso
     }
 
     return mat;
+}
+
+
+
+auto checkOpenCvPerf(std::string imgPath, std::string templatePath ) -> void
+{ 
+    auto numThreads = cv::getNumThreads();
+    auto setThreads = (numThreads+1)/2; 
+    #ifdef HAVE_OPENCV_OCL
+        logInfo("OpenCL Enabled: ", cv::ocl::useOpenCL(), "Threads:", numThreads, "SetThreads:", setThreads);
+    #else
+        logInfo("OpenCL not available. Threads:", numThreads, "SetThreads:", setThreads);
+    #endif
+
+
+    cv::Mat m = cv::imread(imgPath);
+    cv::Mat tmp = cv::imread(templatePath);
+    cv::Mat grayScreen;
+    cv::cvtColor(m, grayScreen, cv::COLOR_BGR2GRAY);
+    cv::Mat leftTemplate, rightTemplate, upTemplate, downTemplate;
+
+    cv::setNumThreads(4);
+    cv::Mat res, res1, res2, res3;
+    LARGE_INTEGER frequency;
+    LARGE_INTEGER start, end;
+    auto whx = grayScreen.cols / 4.0;
+    int wh0 = int(whx);
+    int wh1 = int(whx * 2);
+    int wh2 = int(whx * 3);
+    logInfo("wh0: ", wh0);
+    cv::Rect rgn = {0, 0, wh0, grayScreen.rows};
+    cv::Rect tmpRgn = {0, 0, std::min(tmp.cols, wh0  ), tmp.rows}; 
+    cv::cvtColor(tmp(tmpRgn), upTemplate, cv::COLOR_BGR2GRAY);
+    cv::rotate(upTemplate, leftTemplate, cv::ROTATE_90_COUNTERCLOCKWISE);
+    cv::rotate(upTemplate, rightTemplate, cv::ROTATE_90_CLOCKWISE);
+    cv::rotate(leftTemplate, downTemplate, cv::ROTATE_90_COUNTERCLOCKWISE);
+    // Get the frequency of the performance counter
+    
+    for (int j = 0; j < 10; j++)
+    {
+        logInfo("Iteration: ", j);
+        QueryPerformanceFrequency(&frequency);
+        // Record the starting time
+        QueryPerformanceCounter(&start);
+        for (int i = 0; i < 100; i++)
+        {
+            res = matchTemplateInRegion(grayScreen, leftTemplate, rgn);
+            rgn.x = wh0;
+            res1 = matchTemplateInRegion(grayScreen, downTemplate, rgn);
+            rgn.x = wh1;
+            res2 = matchTemplateInRegion(grayScreen, upTemplate, rgn);
+            rgn.x = wh2;
+            res3 = matchTemplateInRegion(grayScreen, rightTemplate, rgn);
+        }
+
+        // Record the ending time
+        QueryPerformanceCounter(&end);
+
+        // Calculate elapsed time in milliseconds
+        double elapsedTime = static_cast<double>(end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
+        logInfo("Elapsed time: ", elapsedTime/100.0, "ms");
+    }
+    logInfo("res: ", res.cols, "res1: ", res1.cols, "res2: ", res2.cols, "res3: ", res3.cols);
 }

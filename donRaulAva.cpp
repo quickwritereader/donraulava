@@ -3,25 +3,38 @@
 
 #include "donRaulAva.h"
 #include "DetectLoop.h"
+#include <opencv2/core/ocl.hpp>
+#include "NaiveTracker.h"
 // Global Variables:
 
+class Initializer {
+    public:
+        Initializer() {
+            // Call the static method before all other global constructors
+            // Set the current working directory to the folder inside user profile
+            // This way we will avoid any issues with unicode username paths
+            LogToFile::setCurrentWorkingDirectoryToUserProfile();
+        }
+}; 
+    
+// Declare a static initializer object at global scope
+static Initializer initializer;
 Gdiplus::Bitmap *bitmap;
 Gdiplus::Bitmap *glowBitmap;
 RECT ScreenRect;
 float ScaleFactor;
 DetectLoop detectLoop;
 
-auto checkCloseBtnAnimation(HWND hWnd, Gdiplus::Bitmap *bitmap, const POINT &currentPos) -> void;
+
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
+    
     using namespace Gdiplus;
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
-    // Define a unique name for the mutex
-    auto mutexName = "DONRAULITO_MUTEX_ONCE_ONCE";
-
+    // Define a unique name for the mutex 
     // Attempt to create a mutex
-    HANDLE hMutex = CreateMutex(NULL, TRUE, mutexName);
+    HANDLE hMutex = CreateMutexA(NULL, TRUE, "DONRAULITO_MUTEX_ONCE_ONCE");
 
     // Check if the mutex already exists
     if (GetLastError() == ERROR_ALREADY_EXISTS)
@@ -30,7 +43,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
         MessageBoxA(NULL, "Another instance of this program is already running.", "Warning", MB_OK | MB_ICONWARNING);
         return 0;
     }
+    LogToFile::getInstance().setVerboseLevel(getFirstCommandLineArgAsInt());
 
+    logInfo("Starting DonRaulito");
+    //check();
     // Initialize GDI+
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
@@ -60,7 +76,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     }
 
     // Register the window class
-    WNDCLASSEX wcex;
+    WNDCLASSEXA wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = WndProc;
@@ -74,17 +90,17 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     wcex.lpszClassName = "DonRaulito";
     wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
 
-    if (!RegisterClassEx(&wcex))
+    if (!RegisterClassExA(&wcex))
     {
         logError("Call to RegisterClassEx failed!", "DonRaulito");
         return 1;
     }
-   
-    detectLoop.setTrackObj(LoadMatFromResource(hInstance, MAKEINTRESOURCEA(IDR_TMPL_JPG),"JPG"));
+
+    detectLoop.setTrackObj(LoadMatFromResource(hInstance, MAKEINTRESOURCEA(IDR_TMPL_PNG), "PNG"));
     detectLoop.start();
- 
+
     // Create the window
-    HWND hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE, wcex.lpszClassName, TEXT("Don Raulito"),
+    HWND hWnd = CreateWindowExA(WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE, wcex.lpszClassName, "Don Raulito",
                                WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT,
                                width, height, nullptr, nullptr, hInstance, nullptr);
 
@@ -96,7 +112,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
     std::tie(ScreenRect, ScaleFactor) = GetDesktopScreenRect();
     logInfo("Screen Information", "Scale Factor: ", ScaleFactor, "Screen Width: ", ScreenRect.right,
-             "Screen Height: ", ScreenRect.bottom);
+            "Screen Height: ", ScreenRect.bottom);
     DrawWindow(hWnd, bitmap, ScreenRect.right - width - 80, ScreenRect.bottom - height - 120, width, height);
     ShowWindow(hWnd, nCmdShow);
     // Show the window
@@ -195,16 +211,20 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else
             {
-                
+
                 // Simulate double-click
                 if (CurrentMilliseconds() - startTick < 1000)
                 {
                     currentBitmap = currentBitmap == bitmap ? glowBitmap : bitmap;
                     DrawWindow(hWnd, currentBitmap, windowRect.left, windowRect.top, width, height);
-                    if(currentBitmap == glowBitmap){
-                        detectLoop.setParameters(ScreenRect, *config, true);
+                    if (currentBitmap == glowBitmap)
+                    {
+                        bool sv = LogToFile::getInstance().getVerboseLevel() >= 2;
+                        detectLoop.setParameters(ScreenRect, *config, sv);
                         detectLoop.resume();
-                    }else{
+                    }
+                    else
+                    {
                         detectLoop.pause();
                     }
                 }
@@ -254,3 +274,5 @@ auto checkCloseBtnAnimation(HWND hWnd, Gdiplus::Bitmap *bitmap, const POINT &cur
         DrawWindow(hWnd, bitmap, windowRect.left, windowRect.top, width, height);
     }
 }
+
+ 

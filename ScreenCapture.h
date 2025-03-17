@@ -23,5 +23,5 @@ public:
      * @param region The RECT structure defining the region of the screen to capture.
      * @return A cv::Mat object containing the captured screen region.
      */
-    virtual cv::Mat grabScreen(RECT region) = 0;
+    virtual std::optional<cv::Mat> grabScreen(RECT region) = 0;
 };

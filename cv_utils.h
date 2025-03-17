@@ -12,11 +12,9 @@
  * @param templ The template image to search for within the source image.
  * @param region The region of the source image to search within.
  * @param method The comparison method to use for template matching. Default is cv::TM_CCOEFF_NORMED.
- * @param match_threshold The threshold value for considering a match. Default is 0.8.
- * @param debug If true, enables debug mode which may provide additional output for debugging purposes. Default is false.
- * @return A std::vector<cv::Point> containing the result of the template matching.
+ * @return A cv::Mat the result of the template matching.
  */
-auto matchTemplateInRegion(const cv::Mat &img, const cv::Mat &templ, cv::Rect region, int method = cv::TM_CCOEFF_NORMED, double match_threshold = 0.8, bool debug = false)->std::vector<cv::Point>; ;
+auto matchTemplateInRegion(const cv::Mat &img, const cv::Mat &templ, cv::Rect region, int method = cv::TM_CCOEFF_NORMED)->cv::Mat;
 
 /**
  * @brief Detects lines of an image.
@@ -82,4 +80,10 @@ auto detectBorder(const cv::Mat &screen, int minLineLength=100) -> std::optional
  * @param resourceType Type of the resource to load.
  * @return A cv::Mat containing the loaded image.
  */
-auto LoadMatFromResource(HINSTANCE hInstance, LPCTSTR resourceName, LPCTSTR resourceType) -> cv::Mat;
+auto LoadMatFromResource(HINSTANCE hInstance, LPCSTR resourceName, LPCSTR resourceType) -> cv::Mat;
+
+
+/**
+ * @brief Bench: Matches a template within a specified region of an image.
+ */
+auto checkOpenCvPerf(std::string imgPath, std::string templatePath ) -> void;
