@@ -1,0 +1,74 @@
+name: Build DonRaulAva Project
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    if: true # set false to Temporarily disable the job for pull requests
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Install Chocolatey
+      - name: Install Chocolatey
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force; `
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
+          iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+      # Step 3: Install VS studio, Cmake, Ninja and so on
+      - name: Download and install Visual Studio Installer cmake ninja and so on without choco
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vs_buildtools.exe" -OutFile "vs_buildtools.exe"
+          ls "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\"
+          Start-Process -FilePath ".\vs_buildtools.exe" -ArgumentList @(
+            "--quiet", "--wait", "--norestart", "--nocache",
+            "--add", "Microsoft.VisualStudio.Workload.VCTools",
+            "--add", "Microsoft.VisualStudio.Component.VC.CoreBuildTools",
+            "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.${{ inputs.sdk-version }}",
+            "--add", "Microsoft.VisualStudio.Component.CMakeTools",
+            "--add", "Microsoft.VisualStudio.Component.Ninja"
+          ) -Wait
+
+      # Step 4: Install other dependencies
+      - name: Install Dependencies
+        run: |
+          choco install nsis -y
+          choco install 7zip -y
+          choco info nsis
+
+      # Step 5: Download OpenCV Prebuilt Binaries
+      - name: Download OpenCV 4.11 Prebuilt Binaries
+        run: |
+          curl -L -o opencv-4.11-windows.exe https://github.com/opencv/opencv/releases/download/4.11.0/opencv-4.11.0-windows.exe
+          7z x opencv-4.11-windows.exe -oC:\
+          ls C:\opencv
+      # Step 6: Configure MSVC Environment and Build with CMake. 
+      # Use command Prompt as shell for vcvars64.bat settings
+      - name: MSVC Environment and Configure with CMake Preset
+        shell: cmd
+        run: |
+          # Set OpenCV directory
+          set OpenCV_DIR=C:\opencv\build
+          set PATH=%PATH%;C:\opencv\build\bin;
+          # Initialize MSVC build environment
+          "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+          #check
+          where ninja
+          where cmake
+          where rc
+          where cl
+          # Run CMake commands
+          cmake --preset x64-release
+          cmake --build --preset build-x64-release
+          #pack
+          cd .\out\build\x64-release\
+          cpack
