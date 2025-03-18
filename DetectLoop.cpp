@@ -9,7 +9,7 @@
 #include "NaiveTracker.h"
 
 constexpr int MINIMUM_LINE_LENGTH = 170;
-constexpr int BORDER_MATCH_COUNT = 4;
+constexpr int BORDER_MATCH_COUNT = 7;
 constexpr int DETECT_AREA_HEIGHT = 100;
 constexpr double NO_OCCULSION_THRESHOLD = 0.55;
 // Function to check if two borders are within a certain limit

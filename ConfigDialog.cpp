@@ -113,7 +113,7 @@ auto ConfigDialog::handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> 
 		endDialog(wParam);
 		return TRUE;
 	case IDC_RESET:
-		params = {430, 100, 430, 140, 25, 1080, 0};
+		params = {430, 100, 430, 100, 25, 1080, 0};
 		onInit();
 		return TRUE;
 	default:
