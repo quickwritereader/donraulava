@@ -137,13 +137,12 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
   Delete '\$DESKTOP\\\\DonRaulAva.lnk'
   Delete '\$SMPROGRAMS\\\\DonRaulAva\\\\DonRaulAva.lnk'
   Delete '\$SMPROGRAMS\\\\DonRaulAva\\\\Uninstall DonRaulAva.lnk'
-  Delete '\$SMSTARTUP\\\\DonRaulAva.lnk'
   RmDir '\$SMPROGRAMS\\\\DonRaulAva' ; Remove the folder from Start Menu if empty
 
   ; Remove registry keys
   DeleteRegKey HKCU 'Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Uninstall\\\\DonRaulAva'
 ")
-
+#  Delete '\$SMSTARTUP\\\\DonRaulAva.lnk'
 
 include(CPack)
 

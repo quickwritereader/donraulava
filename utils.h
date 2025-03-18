@@ -61,7 +61,7 @@ auto ApplyGaussianBlurTint(Gdiplus::Bitmap *bitmap, int blurRadius, Gdiplus::Col
  */
 
 auto safeStoiDefault(const std::string &str, int defaultVal = 0) -> int;
-auto safeStoiDefault(const std::wstring &text, int defaultVal=0) -> int
+auto safeStoiDefault(const std::wstring &text, int defaultVal=0) -> int;
 /**
  * @brief Simulates a key press event.
  *
@@ -216,7 +216,7 @@ void logError(Args &&...args)
 template <typename... Args>
 void logInfo(Args &&...args)
 {
-    if(LogFile::getInstance().getVerboseLevel() > 0){
+    if(LogToFile::getInstance().getVerboseLevel() > 0){
         log("Info", std::forward<Args>(args)...);
     }
 }

@@ -85,7 +85,7 @@ auto DetectLoop::loop(std::stop_token stopToken) -> void
     auto setThreads = (numThreads + 1) / 2;
     logInfo("Threads:", numThreads, "SetThreads:", setThreads);
 
-    cv::setNumThreads(4);
+    cv::setNumThreads(setThreads);
     auto matchScale = 1.0;
     cv::Mat leftTemplate, rightTemplate, upTemplate, downTemplate;
     cv::cvtColor(trackObject, upTemplate, cv::COLOR_BGR2GRAY);
@@ -112,6 +112,8 @@ auto DetectLoop::loop(std::stop_token stopToken) -> void
         bool saveForDebug = saveImagesAndTracks;
         int dc = 0;
         constexpr int DCMAX = 100;
+        int combosCount=0;
+        int comboMax = comboLimit;
         int fps = 0;
         auto totalElapsed = 0.0;
         NaiveTracker l_tracker{"left: "}, d_tracker{"down: "}, u_tracker{"up:    "}, r_tracker("right:");
@@ -175,7 +177,7 @@ auto DetectLoop::loop(std::stop_token stopToken) -> void
                 int wh1 = int(whx * 2);
                 int wh2 = int(whx * 3);
                 cv::Rect matchRegion{0, 0, wh0, grayScreen.rows};
-                auto lMatches =getLocationsBottomY( matchTemplateInRegion(grayScreen, leftTemplate, matchRegion), leftTemplate.rows);
+                auto lMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, leftTemplate, matchRegion), leftTemplate.rows);
                 matchRegion.x = wh0;
                 auto dMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, downTemplate, matchRegion), leftTemplate.rows);
                 matchRegion.x = wh1;
@@ -217,22 +219,20 @@ auto DetectLoop::loop(std::stop_token stopToken) -> void
                     NaiveTracker::printDetections("Right Detections", rMatches);
                 }
 
-                
-                if (l_tracker.updateTracker(lMatches, start))
-                { 
-                    SimulateKeyPress(VK_LEFT);
-                }
-                if (d_tracker.updateTracker(dMatches, start))
-                { 
-                    SimulateKeyPress(VK_DOWN);
-                }
-                if (u_tracker.updateTracker(uMatches, start))
-                { 
-                    SimulateKeyPress(VK_UP);
-                }
-                if (r_tracker.updateTracker(rMatches, start))
-                { 
-                    SimulateKeyPress(VK_RIGHT);
+                NaiveTracker* trackers[] = {&l_tracker, &d_tracker, &u_tracker, &r_tracker};
+                std::vector<int> matches[] = {lMatches, dMatches, uMatches, rMatches};
+                int keys[] = {VK_LEFT, VK_DOWN, VK_UP, VK_RIGHT};
+
+                for (size_t i = 0; i < 4; ++i) {
+                    if (trackers[i]->updateTracker(matches[i], start)) {
+                        if(combosCount < comboMax){
+                            ++combosCount;
+                            SimulateKeyPress(keys[i]);
+                        }else{
+                            logInfo("Combo limit reached. Skip the keypress");
+                            combosCount = 0;
+                        }
+                    }
                 }
                 if(saveForDebug){
                     l_tracker.printLane();
