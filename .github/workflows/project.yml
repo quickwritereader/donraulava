@@ -130,3 +130,5 @@ jobs:
           asset_path: ./downloaded-artifact/DonRaulAva--win64.exe
           asset_name: DonRaulAva--win64.exe
           asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
