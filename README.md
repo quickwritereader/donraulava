@@ -1,6 +1,7 @@
 # Mini Game Bot
 
 This project plays the mini game inside Avataria. It is built using C++ and CMake.
+![Build Status](https://github.com/quickwritereader/donraulava/actions/workflows/project.yml/badge.svg)
 
 ## Prerequisites
 
