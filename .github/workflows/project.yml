@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - '*'
   pull_request:
 
 jobs:
@@ -83,3 +85,35 @@ jobs:
           cd .\out\build\x64-release\
           cpack
 
+  release:
+    runs-on: windows-latest
+    needs: build # Ensure the build job completes first
+    if: startsWith(github.ref, 'refs/tags/') # Only run this job when it's a tag push
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Create a GitHub Release (Optional)
+      # This step ensures the release is explicitly created if needed
+      - name: Create Release
+        uses: actions/create-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          body: "Release for version ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 3: Upload Executable to GitHub Release
+      - name: Upload Executable to GitHub Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: out/build/x64-release/DonRaulAva--win64.exe
+          asset_name: DonRaulAva--win64.exe
+          asset_content_type: application/octet-stream
