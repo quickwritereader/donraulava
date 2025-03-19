@@ -66,6 +66,8 @@ jobs:
           :: 2: Initialize MSVC build environment
           echo Initializing MSVC build environment...
           call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+          echo set Ninja Path manually
+          set PATH=%PATH%;"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja"
 
           :: 3: Verify tool availability
           echo Verifying tool paths...
