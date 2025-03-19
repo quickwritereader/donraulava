@@ -56,19 +56,31 @@ jobs:
       - name: MSVC Environment and Configure with CMake Preset
         shell: cmd
         run: |
-          # Set OpenCV directory
+          @echo on 
+
+          :: 1: Set OpenCV directory and update PATH
+          echo Setting OpenCV directory...
           set OpenCV_DIR=C:\opencv\build
           set PATH=%PATH%;C:\opencv\build\bin;
-          # Initialize MSVC build environment
-          "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-          #check
+
+          :: 2: Initialize MSVC build environment
+          echo Initializing MSVC build environment...
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+
+          :: 3: Verify tool availability
+          echo Verifying tool paths...
           where ninja
           where cmake
           where rc
           where cl
-          # Run CMake commands
+
+          :: 4: Run CMake commands
+          echo Running CMake commands...
           cmake --preset x64-release
           cmake --build --preset build-x64-release
-          #pack
+
+          :: 5: Package the build
+          echo Packaging the build...
           cd .\out\build\x64-release\
           cpack
+
