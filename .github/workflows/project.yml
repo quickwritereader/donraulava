@@ -109,6 +109,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debug Release Outputs
+        run: |
+          echo "Upload URL: ${{ steps.create_release.outputs.upload_url }}"
+
       # Step 3: Upload Executable to GitHub Release
       - name: Upload Executable to GitHub Release
         uses: actions/upload-release-asset@v1
