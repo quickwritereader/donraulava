@@ -23,7 +23,7 @@ jobs:
           [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
           iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
       # Step 3: Install VS studio, Cmake, Ninja and so on
-      - name: Download and install Visual Studio Installer cmake ninja and so on without choco
+      - name: Download and install Visual Studio Installer cmake and so on without choco
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vs_buildtools.exe" -OutFile "vs_buildtools.exe"
@@ -34,8 +34,7 @@ jobs:
             "--add", "Microsoft.VisualStudio.Component.VC.CoreBuildTools",
             "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
             "--add", "Microsoft.VisualStudio.Component.Windows10SDK.${{ inputs.sdk-version }}",
-            "--add", "Microsoft.VisualStudio.Component.CMakeTools",
-            "--add", "Microsoft.VisualStudio.Component.Ninja"
+            "--add", "Microsoft.VisualStudio.Component.CMakeTools"
           ) -Wait
 
       # Step 4: Install other dependencies
@@ -43,7 +42,7 @@ jobs:
         run: |
           choco install nsis -y
           choco install 7zip -y
-          choco info nsis
+          choco install ninja -y
 
       # Step 5: Download OpenCV Prebuilt Binaries
       - name: Download OpenCV 4.11 Prebuilt Binaries
@@ -66,8 +65,6 @@ jobs:
           :: 2: Initialize MSVC build environment
           echo Initializing MSVC build environment...
           call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-          echo set Ninja Path manually
-          set PATH=%PATH%;"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja"
 
           :: 3: Verify tool availability
           echo Verifying tool paths...
