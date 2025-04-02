@@ -12,6 +12,7 @@ constexpr int MINIMUM_LINE_LENGTH = 170;
 constexpr int BORDER_MATCH_COUNT = 7;
 constexpr int DETECT_AREA_HEIGHT = 100;
 constexpr double NO_OCCULSION_THRESHOLD = 0.55;
+
 // Function to check if two borders are within a certain limit
 auto withinLimit(const RECT &border1, const RECT &border2) -> bool
 {
@@ -22,14 +23,13 @@ auto withinLimit(const RECT &border1, const RECT &border2) -> bool
             abs(border1.bottom - border2.bottom) < LIMIT);
 }
 
-auto getLocationsBottomY(const cv::Mat &result, int height, float threshold = NO_OCCULSION_THRESHOLD) -> std::vector<int>
+auto getLocationsBottomY(const cv::Mat &result, int height, int exitArea, float threshold = NO_OCCULSION_THRESHOLD) -> std::vector<int>
 {
     std::vector<int> locations;
     constexpr int dispY = 17;
     locations.reserve(50);
     float last_thresh = 0;
-    int lastY = 0;
-
+    int lastY = 0; 
     for (int y = 0; y < result.rows; ++y)
     {
         for (int x = 0; x < result.cols; ++x)
@@ -37,6 +37,10 @@ auto getLocationsBottomY(const cv::Mat &result, int height, float threshold = NO
             auto thresh = result.at<float>(y, x);
             if (thresh >= threshold)
             {
+                // do not match
+                if(y>exitArea) {
+                    continue;
+                }
                 if (std::abs(y - lastY) > dispY)
                 {
                     locations.emplace_back(y + height);
@@ -47,6 +51,7 @@ auto getLocationsBottomY(const cv::Mat &result, int height, float threshold = NO
                 {
                     if (thresh > last_thresh)
                     {  
+
                         if(locations.size()>0){
                             locations.back() = y + height;
                         }else{
@@ -177,13 +182,13 @@ auto DetectLoop::loop(std::stop_token stopToken) -> void
                 int wh1 = int(whx * 2);
                 int wh2 = int(whx * 3);
                 cv::Rect matchRegion{0, 0, wh0, grayScreen.rows};
-                auto lMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, leftTemplate, matchRegion), leftTemplate.rows);
+                auto lMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, leftTemplate, matchRegion), leftTemplate.rows, exitAreaY);
                 matchRegion.x = wh0;
-                auto dMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, downTemplate, matchRegion), leftTemplate.rows);
+                auto dMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, downTemplate, matchRegion), leftTemplate.rows, exitAreaY);
                 matchRegion.x = wh1;
-                auto uMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, upTemplate, matchRegion), leftTemplate.rows);
+                auto uMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, upTemplate, matchRegion), leftTemplate.rows, exitAreaY);
                 matchRegion.x = wh2;
-                auto rMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, rightTemplate, matchRegion), leftTemplate.rows);
+                auto rMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, rightTemplate, matchRegion), leftTemplate.rows, exitAreaY);
                 auto cc = CurrentMilliseconds() - tt;
                 logInfo("matched in ", cc, "ms", " ss: ", dc);
                 if (saveForDebug)
