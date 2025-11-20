@@ -172,7 +172,7 @@ public:
         for (auto &el : matchedTrackers)
         {
             el.setPos(detections[newElementsCount], ts);
-            if (el.getPotentialPos(potential_future_loss/2) > exitAreaY && !el.isPassed())
+            if (el.getPotentialPos(potential_future_loss/3) > exitAreaY && !el.isPassed())
             {
                 logInfo(name, "Object ", el.getId(), " passed at ", ts, "area ", exitAreaY);
                 el.markPassed();
