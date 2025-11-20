@@ -172,23 +172,25 @@ auto DetectLoop::loop(std::stop_token stopToken) -> void
                 auto tt = CurrentMilliseconds();
                 cv::resize(grayScreen, grayScreen, cv::Size(), matchScale, matchScale, cv::INTER_NEAREST);
                 auto exitAreaY = grayScreen.rows - DETECT_AREA_HEIGHT;
-                logInfo("Exit Area Y", exitAreaY);
-                l_tracker.setExitAreaY(exitAreaY);
+                auto leftExitAreaY = exitAreaY - 6; //adjust for left lane
+                auto rightExitAreaY = exitAreaY - 9; //adjust for right lane
+                logInfo("exitAreaY:", exitAreaY, "leftExitAreaY:", leftExitAreaY, "rightExitAreaY:", rightExitAreaY);
+                l_tracker.setExitAreaY(leftExitAreaY);
                 d_tracker.setExitAreaY(exitAreaY);
                 u_tracker.setExitAreaY(exitAreaY);
-                r_tracker.setExitAreaY(exitAreaY);
+                r_tracker.setExitAreaY(rightExitAreaY);
                 double whx = grayScreen.cols / 4.0;
                 int wh0 = int(whx);
                 int wh1 = int(whx * 2);
                 int wh2 = int(whx * 3);
                 cv::Rect matchRegion{0, 0, wh0, grayScreen.rows};
-                auto lMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, leftTemplate, matchRegion), leftTemplate.rows, exitAreaY);
+                auto lMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, leftTemplate, matchRegion), leftTemplate.rows, leftExitAreaY);
                 matchRegion.x = wh0;
                 auto dMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, downTemplate, matchRegion), leftTemplate.rows, exitAreaY);
                 matchRegion.x = wh1;
                 auto uMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, upTemplate, matchRegion), leftTemplate.rows, exitAreaY);
                 matchRegion.x = wh2;
-                auto rMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, rightTemplate, matchRegion), leftTemplate.rows, exitAreaY);
+                auto rMatches = getLocationsBottomY( matchTemplateInRegion(grayScreen, rightTemplate, matchRegion), leftTemplate.rows, rightExitAreaY);
                 auto cc = CurrentMilliseconds() - tt;
                 logInfo("matched in ", cc, "ms", " ss: ", dc);
                 if (saveForDebug)
