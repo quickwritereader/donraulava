@@ -174,11 +174,11 @@ auto DetectLoop::loop(std::stop_token stopToken) -> void
                 auto exitAreaY = grayScreen.rows - DETECT_AREA_HEIGHT;
                 auto leftExitAreaY = exitAreaY - 6; //adjust for left lane
                 auto rightExitAreaY = exitAreaY - 9; //adjust for right lane
-                logInfo("exitAreaY:", exitAreaY, "leftExitAreaY:", leftExitAreaY, "rightExitAreaY:", rightExitAreaY);
-                l_tracker.setExitAreaY(leftExitAreaY);
+                logInfo("Detection: exitAreaY:", exitAreaY, "leftExitAreaY:", leftExitAreaY, "rightExitAreaY:", rightExitAreaY);
+                l_tracker.setExitAreaY(exitAreaY);
                 d_tracker.setExitAreaY(exitAreaY);
                 u_tracker.setExitAreaY(exitAreaY);
-                r_tracker.setExitAreaY(rightExitAreaY);
+                r_tracker.setExitAreaY(exitAreaY);
                 double whx = grayScreen.cols / 4.0;
                 int wh0 = int(whx);
                 int wh1 = int(whx * 2);

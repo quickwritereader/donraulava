@@ -13,7 +13,7 @@ class ConfigDialog : public BaseDialog<ConfigDialog>
 {
 private:
 	using BaseDialog::BaseDialog;
-	std::array<int, 7> params = {430, 100, 430, 100, 25, 520, 1};
+	std::array<int, 8> params = {430, 100, 430, 100, 25, 520, 1, 1};
 	std::string configFile;
 
 	/**
@@ -105,4 +105,12 @@ public:
 	 * @return 0 for DDAPI, 1 WIN32API
 	 */
 	auto ScreenCaptureMethod() const -> int;
+
+
+    /**
+	 * @brief Gets the UI skin
+	 * 
+	 * @return 0 for Don Raul skin, 1 .., 2..
+	 */
+	auto UISkin () const -> int;
 };

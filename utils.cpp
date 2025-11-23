@@ -60,17 +60,25 @@ auto safeStoiDefault(const std::wstring &text, int defaultVal) -> int
 
 auto DrawCloseBtnOnBitmap(Gdiplus::Bitmap *bitmap, LONG width, LONG height, bool mouseOver = false) -> void
 {
+    if (!bitmap)
+    {
+        return;
+    }
     // Draw our close rectangle on bitmap
     Graphics bmpGraphics(bitmap);
     SolidBrush brush(mouseOver ? Color(255, 255, 0, 0) : Color(255, 0, 0, 255));
     Pen p(Color(255, 255, 255, 255), 2);
-    bmpGraphics.FillRectangle(&brush, width - width / 10, 0, width, height / 10);
-    bmpGraphics.DrawLine(&p, width - width / 10, 0, width, height / 10);
-    bmpGraphics.DrawLine(&p, width - width / 10, height / 10, width, 0);
+    bmpGraphics.FillRectangle(&brush, width - width / 10, 0, width, width / 10);
+    bmpGraphics.DrawLine(&p, width - width / 10, 0, width, width / 10);
+    bmpGraphics.DrawLine(&p, width - width / 10, width / 10, width, 0);
 }
 
 auto DrawWindow(HWND hWnd, Gdiplus::Bitmap *bitmap, LONG x, LONG y, LONG width, LONG height) -> void
 {
+    if (!bitmap || !hWnd)
+    {
+        return;
+    }
 
     // Create a compatible DC and bitmap
     HDC hdcScreen = GetDC(hWnd);
@@ -100,7 +108,7 @@ auto withinClosebtn(HWND hWnd, const POINT &currentPos, LONG width, LONG height)
 {
 
     return currentPos.x > width - width / 10 && currentPos.x < width &&
-           currentPos.y > 0 && currentPos.y < height / 10;
+           currentPos.y > 0 && currentPos.y < width / 10;
 }
 
 auto ApplyGaussianBlurTint(Bitmap *bitmap, int blurRadius, Color tint) -> void

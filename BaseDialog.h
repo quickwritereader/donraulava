@@ -76,11 +76,22 @@ public:
 	 */
 	auto onInit() -> void;
 
+    auto setParentCallBackMSG(UINT Msg) -> void {
+		ParentCallBackMSG = Msg;
+	}
+
+	auto sendParentCallBack(WPARAM wParam, LPARAM lParam) -> void {
+		if ( ParentCallBackMSG!=0 ) {
+		   SendMessage(parent, ParentCallBackMSG, wParam, lParam);
+	    }
+	}
+
 private:
 	HWND self = nullptr; ///< Handle to the dialog.
 	HINSTANCE inst; ///< Handle to the instance.
 	HWND parent; ///< Handle to the parent window.
 	int tmplId; ///< Resource ID of the dialog template.
+	UINT ParentCallBackMSG = 0; ///< Callback MSG.
 
 	/**
 	 * @brief Dialog procedure.

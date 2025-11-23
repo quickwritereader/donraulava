@@ -89,7 +89,7 @@ endif()
 # CPack Configuration
 set(CPACK_PACKAGE_NAME "DonRaulAva")
 set(CPACK_PACKAGE_VENDOR "Cobraxava DonRaul")
-set(CPACK_PACKAGE_CONTACT "support@yourcompany.com")
+set(CPACK_PACKAGE_CONTACT "cobraxava discord channel")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "DonRaul's mini game player bot")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "DonRaulAva")
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})

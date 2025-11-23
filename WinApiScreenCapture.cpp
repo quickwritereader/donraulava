@@ -2,22 +2,11 @@
 #include <string>
 
 static void logLastError(const std::string& context) {
-    DWORD err = GetLastError();
-    if (err != 0) {
-        LPVOID msgBuf;
-        FormatMessageA(
-            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            nullptr,
-            err,
-            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            (LPSTR)&msgBuf,
-            0,
-            nullptr
-        );
-        logError(context + " failed. Error " + std::to_string(err) + ": " + (char*)msgBuf);
-        LocalFree(msgBuf);
-    } else {
-        logError(context + " failed with no error code.");
+
+    auto err = GetLastErrorAsString();
+    if (!err.empty()) {
+        logError(context + " failed. Error: " + err);
+        return;
     }
 }
 

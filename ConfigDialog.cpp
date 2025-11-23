@@ -76,6 +76,16 @@ auto ConfigDialog::fillParamFromEdit() -> void
 		}
 	}
 
+	// Get the selected item from the skin combo box
+	auto hSkinComboBox = GetDlgItem(IDC_COMBO2);
+	if(hSkinComboBox){
+	    auto x = SendMessageA(hSkinComboBox, CB_GETCURSEL, 0, 0);
+		logInfo("Skin combo box value: ", x);
+		if (x>=0 and x<6){
+			params[7] = (int)x ;
+		}
+	}
+
 }
 
 auto ConfigDialog::onInit() -> void
@@ -95,6 +105,20 @@ auto ConfigDialog::onInit() -> void
         SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"WIN32");
 		SendMessageA(hComboBox, CB_SETCURSEL, params[6], 0);
 	}
+	auto hSkinComboBox = GetDlgItem(IDC_COMBO2);
+	if(hSkinComboBox){
+		logInfo("Skin combo box setup");
+		SendMessage(hSkinComboBox, CB_RESETCONTENT, 0, 0); // Clear any existing items
+
+		// Add items to the combo box and set selected index
+		SendMessage(hSkinComboBox, CB_ADDSTRING, 0, (LPARAM)"Don");
+		SendMessage(hSkinComboBox, CB_ADDSTRING, 0, (LPARAM)"Celly");
+		SendMessage(hSkinComboBox, CB_ADDSTRING, 0, (LPARAM)"Don 2");
+		SendMessage(hSkinComboBox, CB_ADDSTRING, 0, (LPARAM)"Eggio");
+		SendMessage(hSkinComboBox, CB_ADDSTRING, 0, (LPARAM)"Ida");
+		SendMessage(hSkinComboBox, CB_ADDSTRING, 0, (LPARAM)"Rapha");
+		SendMessageA(hSkinComboBox, CB_SETCURSEL, params[7], 0);
+	}
 
 }
 
@@ -107,13 +131,15 @@ auto ConfigDialog::handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> 
 		{
 			fillParamFromEdit();
 			save();
+			sendParentCallBack(IDOK, 0);
 		}
+		
 	// NOTE fall through to IDCANCEL
 	case IDCANCEL:
 		endDialog(wParam);
 		return TRUE;
 	case IDC_RESET:
-		params = {430, 100, 430, 100, 25, 520, 1};
+		params = {430, 100, 430, 100, 25, 520, 1, 1};
 		onInit();
 		return TRUE;
 	default:
@@ -169,4 +195,9 @@ auto ConfigDialog::ComboThreshold() const -> int
 
 auto ConfigDialog::ScreenCaptureMethod() const -> int {
 	return params[6];
+}
+
+
+auto ConfigDialog::UISkin () const -> int {
+	return params[7];
 }

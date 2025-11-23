@@ -7,32 +7,87 @@
 #include "NaiveTracker.h"
 // Global Variables:
 
-class Initializer {
-    public:
-        Initializer() {
-            // Call the static method before all other global constructors
-            // Set the current working directory to the folder inside user profile
-            // This way we will avoid any issues with unicode username paths
-            LogToFile::setCurrentWorkingDirectoryToUserProfile();
-        }
-}; 
-    
+class Initializer
+{
+public:
+    Initializer()
+    {
+        // Call the static method before all other global constructors
+        // Set the current working directory to the folder inside user profile
+        // This way we will avoid any issues with unicode username paths
+        LogToFile::setCurrentWorkingDirectoryToUserProfile();
+    }
+};
+
 // Declare a static initializer object at global scope
 static Initializer initializer;
-Gdiplus::Bitmap *bitmap;
-Gdiplus::Bitmap *glowBitmap;
+Gdiplus::Bitmap *bitmap = nullptr;
+Gdiplus::Bitmap *glowBitmap = nullptr;
 RECT ScreenRect;
 float ScaleFactor;
 DetectLoop detectLoop;
 
+auto LoadSkinBitmap(HINSTANCE hInstance, int skinIndex) -> std::tuple<LONG, LONG, Gdiplus::Bitmap *, Gdiplus::Bitmap *>
+{
+    using namespace Gdiplus;
+
+    auto SKIN_RES_ID = IDR_RAUL_PNG + skinIndex;
+    // Load the PNG image using GDI+
+    auto bitmap = LoadBitmapFromResource(hInstance, MAKEINTRESOURCEA(SKIN_RES_ID), "PNG");
+    // Get the bitmap size
+    LONG width = (LONG)bitmap->GetWidth();
+    LONG height = (LONG)bitmap->GetHeight();
+    // Create a copy of the image
+    auto glowBitmap = new Gdiplus::Bitmap(width, height, PixelFormat32bppARGB);
+    Graphics glowGraphics(glowBitmap);
+    glowGraphics.DrawImage(bitmap, 0, 0, width, height);
+    ApplyGaussianBlurTint(glowBitmap, 13, Color(255, 255, 0, 255));
+    // draw original over again
+    glowGraphics.DrawImage(bitmap, 0, 0, width, height);
+    // draw close button on both bitmaps
+    DrawCloseBtnOnBitmap(bitmap, width, height, false);
+    DrawCloseBtnOnBitmap(glowBitmap, width, height, false);
+
+    return {width, height, bitmap, glowBitmap};
+}
+
+auto ChangeSkin(HWND hWnd, HINSTANCE hInstance, int skinIndex, bool UseGlow=false) -> void
+{
+    static int LastSkin = -1;
+    if (LastSkin != skinIndex)
+    {
+        
+        auto [width, height, bmp, gbmp] = LoadSkinBitmap(hInstance, skinIndex);
+        delete bitmap;
+        delete glowBitmap;
+        bitmap = bmp;
+        glowBitmap = gbmp;
+        // Adjust window size to bitmap size
+        RECT windowRect{0, 0, width, height};
+        AdjustWindowRectEx(&windowRect, WS_POPUP, FALSE, WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE);
+
+        if (LastSkin == -1)
+        {
+            //Get screen rect
+            std::tie(ScreenRect, ScaleFactor) = GetDesktopScreenRect();
+            DrawWindow(hWnd, bitmap, ScreenRect.right - width - 80, ScreenRect.bottom - height - 120, width, height);
+        }
+        else
+        {
+            GetWindowRect(hWnd, &windowRect);
+            DrawWindow(hWnd, UseGlow?glowBitmap:bitmap, windowRect.left, windowRect.top, width, height);
+        }
+        LastSkin = skinIndex;
+    }
+}
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-    
+
     using namespace Gdiplus;
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
-    // Define a unique name for the mutex 
+    // Define a unique name for the mutex
     // Attempt to create a mutex
     HANDLE hMutex = CreateMutexA(NULL, TRUE, "DONRAULITO_MUTEX_ONCE_ONCE");
 
@@ -46,35 +101,15 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     LogToFile::getInstance().setVerboseLevel(getFirstCommandLineArgAsInt());
 
     logInfo("Starting DonRaulito");
-    //check();
-    // Initialize GDI+
+    // check();
+    //  Initialize GDI+
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
 
-    // Load the image
-    // Load the PNG image using GDI+
-    bitmap = LoadBitmapFromResource(hInstance, MAKEINTRESOURCEA(IDR_RAUL_PNG), "PNG");
-    // Get the bitmap size
-    LONG width = (LONG)bitmap->GetWidth();
-    LONG height = (LONG)bitmap->GetHeight();
-    // Create a copy of the image
-    glowBitmap = new Gdiplus::Bitmap(width, height, PixelFormat32bppARGB);
-    Graphics glowGraphics(glowBitmap);
-    glowGraphics.DrawImage(bitmap, 0, 0, width, height);
-    ApplyGaussianBlurTint(glowBitmap, 13, Color(255, 255, 0, 255));
-    // draw original over again
-    glowGraphics.DrawImage(bitmap, 0, 0, width, height);
-    // draw close button on both bitmaps
-    DrawCloseBtnOnBitmap(bitmap, width, height, false);
-    DrawCloseBtnOnBitmap(glowBitmap, width, height, false);
-
-    if (bitmap->GetLastStatus() != Ok)
-    {
-        logError("Bitmap load failure", "DonRaulito");
-        return 0;
-    }
-
+    LONG width, height;
+    width = 170; // default
+    height = 285;
     // Register the window class
     WNDCLASSEXA wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
@@ -101,8 +136,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
     // Create the window
     HWND hWnd = CreateWindowExA(WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE, wcex.lpszClassName, "Don Raulito",
-                               WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT,
-                               width, height, nullptr, nullptr, hInstance, nullptr);
+                                WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT,
+                                width, height, nullptr, nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {
@@ -110,10 +145,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
         return 1;
     }
 
-    std::tie(ScreenRect, ScaleFactor) = GetDesktopScreenRect();
-    logInfo("Screen Information", "Scale Factor: ", ScaleFactor, "Screen Width: ", ScreenRect.right,
-            "Screen Height: ", ScreenRect.bottom);
-    DrawWindow(hWnd, bitmap, ScreenRect.right - width - 80, ScreenRect.bottom - height - 120, width, height);
     ShowWindow(hWnd, nCmdShow);
     // Show the window
 
@@ -150,9 +181,14 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_CREATE:
+    {
         glInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
         config = new ConfigDialog(glInstance, hWnd);
-        break;
+        config->setParentCallBackMSG(WM_CONFIG_USER);
+        ChangeSkin(hWnd, glInstance, config->UISkin());
+        currentBitmap = bitmap;
+    }
+    break;
     // explicit dragging without using NCHITTEST overriding
     case WM_LBUTTONDOWN:
     {
@@ -234,6 +270,16 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         position_changed = false;
     }
         return 0;
+    case WM_CONFIG_USER:
+        if (wParam == IDOK)
+        {
+            bool useGlow = currentBitmap == glowBitmap;
+            ChangeSkin(hWnd, glInstance, config->UISkin(), useGlow);
+            // save current bitmap state
+            currentBitmap = useGlow ? glowBitmap : bitmap;
+        }
+        return 0;
+
     case WM_RBUTTONUP:
         config->open();
         break;
@@ -274,5 +320,3 @@ auto checkCloseBtnAnimation(HWND hWnd, Gdiplus::Bitmap *bitmap, const POINT &cur
         DrawWindow(hWnd, bitmap, windowRect.left, windowRect.top, width, height);
     }
 }
-
- 
