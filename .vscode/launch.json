@@ -8,7 +8,7 @@
         "name": "donraul",
         "type": "cppvsdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/out/build/x64-release/donRaulAva.exe",
+        "program": "${workspaceFolder}/out/build/x64-debug/donRaulAva.exe",
         "args": ["3"],
         "stopAtEntry": false,
         "cwd": "${fileDirname}",

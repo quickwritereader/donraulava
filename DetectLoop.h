@@ -61,15 +61,30 @@ public:
      * @param config Configuration dialog for settings
      * @param saveDebug Flag to save debug images and tracks (default is false)
      */
-    auto setParameters(const RECT &screenRect, const ConfigDialog &config, bool saveDebug = false) -> void
+    auto setParameters(const RECT& screenRect, const ConfigDialog& config, bool saveDebug = false) -> void
     {
+        // Capture method and thresholds
         captureMethod = config.ScreenCaptureMethod();
-        comboLimit = config.ComboThreshold();
-        left = screenRect.left + config.Left();
-        top = screenRect.top + config.Top();
-        right = screenRect.right - config.Right();
+        comboLimit    = config.ComboThreshold();
+
+        // Apply offsets
+        left   = screenRect.left   + config.Left();
+        top    = screenRect.top    + config.Top();
+        right  = screenRect.right  - config.Right();
         bottom = screenRect.bottom - config.Bottom();
+
         saveImagesAndTracks = saveDebug;
+
+        // Validate region
+        if (left >= right || top >= bottom) {
+            logError("Invalid capture region after applying config offsets. Falling back to defaults.");
+
+            // Fallback to defaults (use original screenRect without offsets)
+            left   = screenRect.left;
+            top    = screenRect.top;
+            right  = screenRect.right;
+            bottom = screenRect.bottom;
+        }
     }
 
     /**

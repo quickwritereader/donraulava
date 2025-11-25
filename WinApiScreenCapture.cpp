@@ -1,77 +1,94 @@
 #include "WinApiScreenCapture.h"
 #include <string>
+#include <optional>
+#include <windows.h>
+#include <opencv2/opencv.hpp>
+
+
 
 static void logLastError(const std::string& context) {
-
-    auto err = GetLastErrorAsString();
-    if (!err.empty()) {
+    DWORD code = GetLastError();
+    if (code != 0) {
+        auto err = GetLastErrorAsString();
         logError(context + " failed. Error: " + err);
-        return;
+        SetLastError(0);
     }
 }
-
+ 
 WinApiScreenCapture::WinApiScreenCapture()
 {
+ 
     hScreenDC = GetDC(nullptr);
     if (!hScreenDC) {
-        logLastError("GetDC");
-    } 
-
+        logLastError("GetDC(nullptr)");
+    }
     hMemoryDC = CreateCompatibleDC(hScreenDC);
     if (!hMemoryDC) {
         logLastError("CreateCompatibleDC");
-    } 
+    }
 }
 
 WinApiScreenCapture::~WinApiScreenCapture()
 {
-    if (hScreenDC) {
-        ReleaseDC(nullptr, hScreenDC);
-    }
     if (hMemoryDC) {
         DeleteDC(hMemoryDC);
     }
+    if (hScreenDC) {
+        ReleaseDC(nullptr, hScreenDC);
+    }
 }
+ 
 
-cv::Mat HBitmapToMat(HDC hdc, HBITMAP hBitmap)
+// Convert HBITMAP to cv::Mat using 32-bit BGRA and convert to BGR.
+static cv::Mat HBitmapToMat32(HDC hdc, HBITMAP hBitmap)
 {
-    BITMAP bmp;
+    BITMAP bmp{};
     if (GetObject(hBitmap, sizeof(BITMAP), &bmp) == 0) {
-        logLastError("GetObject");
-        return cv::Mat();
+        logLastError("GetObject(HBITMAP)");
+        return {};
     }
 
-    int imgWidth = bmp.bmWidth;
-    int imgHeight = bmp.bmHeight;
+    const int imgWidth  = bmp.bmWidth;
+    const int imgHeight = bmp.bmHeight;
     if (imgWidth <= 0 || imgHeight <= 0) {
-        logError("Invalid bitmap dimensions: " + std::to_string(imgWidth) + "x" + std::to_string(imgHeight));
-        return cv::Mat();
+        logError(std::string("Invalid bitmap dimensions: ")
+                 + std::to_string(imgWidth) + "x" + std::to_string(imgHeight));
+        return {};
     }
 
-    BITMAPINFO bmi = {};
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = imgWidth;
-    bmi.bmiHeader.biHeight = -imgHeight; // top-down
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 24;
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth       = imgWidth;
+    bmi.bmiHeader.biHeight      = -imgHeight; // top-down
+    bmi.bmiHeader.biPlanes      = 1;
+    bmi.bmiHeader.biBitCount    = 32;         // BGRA
     bmi.bmiHeader.biCompression = BI_RGB;
 
-    cv::Mat image(imgHeight, imgWidth, CV_8UC3);
-    int res = GetDIBits(hdc, hBitmap, 0, imgHeight, image.data, &bmi, DIB_RGB_COLORS);
-    if (res == 0) {
+    cv::Mat bgra(imgHeight, imgWidth, CV_8UC4);
+    const int scanLines = GetDIBits(hdc, hBitmap, 0, imgHeight, bgra.data, &bmi, DIB_RGB_COLORS);
+    if (scanLines == 0) {
         logLastError("GetDIBits");
-        return cv::Mat();
+        return {};
     }
 
-    return image;
+    cv::Mat bgr;
+    cv::cvtColor(bgra, bgr, cv::COLOR_BGRA2BGR);
+    return bgr;
 }
 
-auto WinApiScreenCapture::grabScreen(RECT region) -> std::optional<cv::Mat>
+std::optional<cv::Mat> WinApiScreenCapture::grabScreen(RECT region)
 {
-    int width = region.right - region.left;
+    if (!hScreenDC || !hMemoryDC) {
+        logError("Device contexts are not initialized.");
+        return std::nullopt;
+    }
+
+    int width  = region.right  - region.left;
     int height = region.bottom - region.top;
+
     if (width <= 0 || height <= 0) {
-        logError("Invalid capture region dimensions: " + std::to_string(width) + "x" + std::to_string(height));
+        logError(std::string("Invalid capture region dimensions: ")
+                 + std::to_string(width) + "x" + std::to_string(height));
         return std::nullopt;
     }
 
@@ -81,19 +98,23 @@ auto WinApiScreenCapture::grabScreen(RECT region) -> std::optional<cv::Mat>
         return std::nullopt;
     }
 
-    if (!SelectObject(hMemoryDC, hBitmap)) {
-        logLastError("SelectObject");
+    HGDIOBJ oldObj = SelectObject(hMemoryDC, hBitmap);
+    if (!oldObj || oldObj == HGDI_ERROR) {
+        logLastError("SelectObject(hBitmap)");
         DeleteObject(hBitmap);
         return std::nullopt;
     }
 
     if (!BitBlt(hMemoryDC, 0, 0, width, height, hScreenDC, region.left, region.top, SRCCOPY)) {
         logLastError("BitBlt");
+        SelectObject(hMemoryDC, oldObj);
         DeleteObject(hBitmap);
         return std::nullopt;
     }
 
-    cv::Mat img = HBitmapToMat(hMemoryDC, hBitmap);
+    cv::Mat img = HBitmapToMat32(hMemoryDC, hBitmap);
+
+    SelectObject(hMemoryDC, oldObj);
     DeleteObject(hBitmap);
 
     if (img.empty()) {

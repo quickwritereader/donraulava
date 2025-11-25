@@ -12,7 +12,7 @@
 #include <windows.h>
 #include <opencv2/opencv.hpp>
 
-
+ 
 /**
  * @class WinApiScreenCapture
  * @brief A class for capturing screen content on Windows.
@@ -43,6 +43,7 @@ public:
     std::optional<cv::Mat> grabScreen(RECT region) override;
 
 private:
-    HDC hScreenDC;  ///< Handle to the screen device context.
-    HDC hMemoryDC;  ///< Handle to the memory device context.
+    HDC hScreenDC = nullptr;  ///< Handle to the screen device context.
+    HDC hMemoryDC = nullptr;  ///< Handle to the memory device context..
+
 };

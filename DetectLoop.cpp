@@ -10,7 +10,7 @@
 
 constexpr int MINIMUM_LINE_LENGTH = 170;
 constexpr int BORDER_MATCH_COUNT = 7;
-constexpr int DETECT_AREA_HEIGHT = 100;
+constexpr int DETECT_AREA_HEIGHT = 98;
 constexpr double NO_OCCULSION_THRESHOLD = 0.55;
 
 // Function to check if two borders are within a certain limit
@@ -80,6 +80,33 @@ auto doubleRectCoords(const std::optional<RECT> &rectOpt) -> std::optional<RECT>
     }
     return std::nullopt;
 }
+
+// Adjust rect using border, then clamp against the original rect itself
+RECT adjustWithClamp(const RECT& rect, const RECT& border)
+{
+    // Apply border offsets
+    RECT adjusted{
+        rect.left + border.left,
+        rect.top  + border.top,
+        rect.left + border.left + (border.right  - border.left),
+        rect.top  + border.top  + (border.bottom - border.top)
+    };
+
+    // Clamp adjusted rect against the original rect
+    if (adjusted.left   < rect.left)   adjusted.left   = rect.left;
+    if (adjusted.top    < rect.top)    adjusted.top    = rect.top;
+    if (adjusted.right  > rect.right)  adjusted.right  = rect.right;
+    if (adjusted.bottom > rect.bottom) adjusted.bottom = rect.bottom;
+
+    // Ensure validity: if invalid, fall back to original rect
+    if (adjusted.right <= adjusted.left || adjusted.bottom <= adjusted.top) {
+        logError("Adjusted rect invalid, falling back to original rect");
+        return rect;
+    }
+
+    return adjusted;
+}
+
 
 auto DetectLoop::loop(std::stop_token stopToken) -> void
 {
@@ -265,11 +292,7 @@ auto DetectLoop::loop(std::stop_token stopToken) -> void
                 if (borderDetectionCount > BORDER_MATCH_COUNT)
                 {
                     // capture borders from now on
-                    rect.left += border.left;
-                    rect.top += border.top;
-                    rect.right = rect.left + (border.right - border.left);
-                    rect.bottom = rect.top + (border.bottom - border.top);
-
+                    rect=adjustWithClamp(rect,border); 
                     logInfo("Updated grab rectangle:", rect.left, rect.top, rect.right, rect.bottom);
                     if (saveForDebug)
                     {
