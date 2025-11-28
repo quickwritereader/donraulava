@@ -1,6 +1,6 @@
 # Mini Game Bot
 
-This project plays the mini game inside Avataria. It is built using C++ and CMake.
+This project plays the mini game. It is built using C++ and CMake.
 ![Build Status](https://github.com/quickwritereader/donraulava/actions/workflows/project.yml/badge.svg)
 
 ## Prerequisites
@@ -75,17 +75,3 @@ This project plays the mini game inside Avataria. It is built using C++ and CMak
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## Acknowledgements
-
-- Thanks to the developers of CMake and Visual Studio Code for their excellent tools.
-- Gratitude to the CobraxAva team for their support and contributions.
-
-## Donation  
-  If you would like to support us, please consider making a donation to our Litecoin address:
-
-  ### Litecoin Address:
-  ```
-  ltc1qj3l4mlh3wk6ld9348hk2rvfndfgnv2feqz9fqe
-  ```
-    
-  ### Thank you for your support!
