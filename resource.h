@@ -21,7 +21,8 @@
 #define IDR_EGG_PNG 115
 #define IDR_IDA_PNG 116
 #define IDR_RAPH_PNG 117
-#define IDR_TMPL_PNG 119
+#define IDR_KYLE_PNG 118
+#define IDR_TMPL_PNG 129
 // Next default values for new objects
 // 
 

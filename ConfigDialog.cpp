@@ -81,7 +81,7 @@ auto ConfigDialog::fillParamFromEdit() -> void
 	if(hSkinComboBox){
 	    auto x = SendMessageA(hSkinComboBox, CB_GETCURSEL, 0, 0);
 		logInfo("Skin combo box value: ", x);
-		if (x>=0 and x<6){
+		if (x>=0 and x<7){
 			params[7] = (int)x ;
 		}
 	}
@@ -117,6 +117,7 @@ auto ConfigDialog::onInit() -> void
 		SendMessage(hSkinComboBox, CB_ADDSTRING, 0, (LPARAM)"Eggio");
 		SendMessage(hSkinComboBox, CB_ADDSTRING, 0, (LPARAM)"Ida");
 		SendMessage(hSkinComboBox, CB_ADDSTRING, 0, (LPARAM)"Rapha");
+		SendMessage(hSkinComboBox, CB_ADDSTRING, 0, (LPARAM)"Kyle");
 		SendMessageA(hSkinComboBox, CB_SETCURSEL, params[7], 0);
 	}
 
@@ -139,7 +140,7 @@ auto ConfigDialog::handleCommand(UINT message, WPARAM wParam, LPARAM lParam) -> 
 		endDialog(wParam);
 		return TRUE;
 	case IDC_RESET:
-		params = {430, 100, 430, 100, 25, 520, 1, 1};
+		params = {430, 100, 430, 100, 25, 520, 1, 0};
 		onInit();
 		return TRUE;
 	default:

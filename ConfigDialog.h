@@ -13,7 +13,7 @@ class ConfigDialog : public BaseDialog<ConfigDialog>
 {
 private:
 	using BaseDialog::BaseDialog;
-	std::array<int, 8> params = {430, 100, 430, 100, 25, 520, 1, 1};
+	std::array<int, 8> params = {430, 100, 430, 100, 25, 520, 1, 0};
 	std::string configFile;
 
 	/**
