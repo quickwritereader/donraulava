@@ -71,6 +71,16 @@ This project plays the mini game. It is built using C++ and CMake.
     - Use the CMake Tools extension to build the project by selecting `CMake: Build`.
     - Run the executable from the terminal or use the debugging features of Visual Studio Code.
 
+## Sponsorship
+
+If **donraulava** helped you automate tasks or learn about OpenCV and Win32 API integration, consider supporting the project with **Litecoin (LTC)**. 
+Contributions help in refining the bot's logic.
+<img width="340" height="340" alt="ava" src="https://github.com/user-attachments/assets/de745951-03f8-4845-98e1-c04aa7a90c48" />
+
+**LTC Address:** `ltc1qj3l4mlh3wk6ld9348hk2rvfndfgnv2feqz9fqe`
+
+> [!IMPORTANT]
+> **Send LTC only.** Ensure you are using the **Litecoin (LTC) network**. Funds sent via other networks (like BEP20 or ERC20) cannot be recovered.
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
